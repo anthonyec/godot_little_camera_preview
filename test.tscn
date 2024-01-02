@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://c1dey2e4mbv6m"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_57jml"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.926791, 0.375577, 0, -0.375577, 0.926791, 0.1183, 1.16656, 0.112652)
+cull_mask = 1040383
+
+[node name="Camera3D2" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.0783028, 0.99693, 0, -0.99693, 0.0783028, 0.1183, 2.78048, -2.88363)
+cull_mask = 1040383
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.0121995, 0.844966, -0.534681, -0.999926, 0.010309, -0.00652334, 0, 0.534721, 0.845029, 0, 0.692551, -2.67375)
+mesh = SubResource("BoxMesh_57jml")
