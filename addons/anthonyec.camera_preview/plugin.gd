@@ -29,6 +29,9 @@ func _exit_tree() -> void:
 	
 func _on_main_screen_changed(screen_name: String) -> void:
 	current_main_screen_name = screen_name
+	
+	 # TODO: Bit of a hack to prevent pinned staying between view changes on the same scene.
+	preview.unlink_camera()
 	_on_editor_selection_changed()
 
 func _on_editor_selection_changed() -> void:
@@ -37,19 +40,15 @@ func _on_editor_selection_changed() -> void:
 		# any locked previews to remain visible once switching back to 3D tab.
 		preview.visible = false
 		return
-
-	preview.visible = true
 		
+	preview.visible = true
+	
 	var selected_nodes = EditorInterface.get_selection().get_selected_nodes()
-	var selected_camera_3d: Camera3D
 	
-	for node in selected_nodes:
-		if node is Camera3D:
-			selected_camera_3d = node as Camera3D
-			break
+	var selected_camera_3d: Camera3D = find_camera_3d_or_null(selected_nodes)
+	var selected_camera_2d: Camera2D = find_camera_2d_or_null(selected_nodes)
 	
-	# Show the preview panel and create a remote transform in the selected cam.
-	if selected_camera_3d:
+	if selected_camera_3d and current_main_screen_name == "3D":
 		var is_different_camera = selected_camera_3d != preview.selected_camera_3d
 		
 		# TODO: A bit messy.
@@ -60,7 +59,11 @@ func _on_editor_selection_changed() -> void:
 			if not selected_camera_3d.tree_exiting.is_connected(_on_selected_camera_3d_tree_exiting):
 				selected_camera_3d.tree_exiting.connect(_on_selected_camera_3d_tree_exiting)
 		
-		preview.link_with_camera(selected_camera_3d)
+		preview.link_with_camera_3d(selected_camera_3d)
+		preview.request_show()
+	
+	elif selected_camera_2d and current_main_screen_name == "2D":
+		preview.link_with_camera_2d(selected_camera_2d)
 		preview.request_show()
 		
 	else:
@@ -68,6 +71,26 @@ func _on_editor_selection_changed() -> void:
 	
 func is_main_screen_viewport() -> bool:
 	return current_main_screen_name == "3D" or current_main_screen_name == "2D"
+	
+func find_camera_3d_or_null(nodes: Array[Node]) -> Camera3D:
+	var camera: Camera3D
+	
+	for node in nodes:
+		if node is Camera3D:
+			camera = node as Camera3D
+			break
+			
+	return camera
+	
+func find_camera_2d_or_null(nodes: Array[Node]) -> Camera2D:
+	var camera: Camera2D
+	
+	for node in nodes:
+		if node is Camera2D:
+			camera = node as Camera2D
+			break
+			
+	return camera
 
 func _on_selected_camera_3d_tree_exiting() -> void:
 	preview.unlink_camera()

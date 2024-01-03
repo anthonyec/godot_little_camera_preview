@@ -3,6 +3,11 @@
 class_name CameraPreview
 extends Control
 
+enum CameraType {
+	CAMERA_2D,
+	CAMERA_3D
+}
+
 enum PinnedPosition {
 	LEFT,
 	RIGHT,
@@ -19,7 +24,8 @@ enum InteractionState {
 	ANIMATE_INTO_PLACE,
 }
 
-const margin: Vector2 = Vector2(20, 20)
+const margin_3d: Vector2 = Vector2(20, 20)
+const margin_2d: Vector2 = Vector2(40, 30)
 const min_panel_width: float = 150
 const max_panel_width_ratio: float = 0.6
 
@@ -32,6 +38,7 @@ const max_panel_width_ratio: float = 0.6
 @onready var resize_right_handle: Button = %ResizeRightHandle
 @onready var lock_button: Button = %LockButton
 
+var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
 var viewport_ratio: float = 1
 var is_locked: bool
@@ -65,6 +72,8 @@ func _process(_delta: float) -> void:
 	
 	var viewport_size = Vector2(panel.size.x, panel.size.x * viewport_ratio)
 	sub_viewport.size = viewport_size
+	# TODO: Do something different here to scale viewport correctly in 2D.
+	sub_viewport.size_2d_override = viewport_size
 	
 	match state:
 		InteractionState.NONE:
@@ -141,40 +150,53 @@ func _process(_delta: float) -> void:
 	lock_button.visible = show_controls or is_locked
 	placeholder.visible = state == InteractionState.DRAG or state == InteractionState.ANIMATE_INTO_PLACE
 
-	if not selected_camera_3d: return
+	# Sync camera settings.
+	if selected_camera_3d:
+		preview_camera_3d.fov = selected_camera_3d.fov
+		preview_camera_3d.projection = selected_camera_3d.projection
+		preview_camera_3d.size = selected_camera_3d.size
+		preview_camera_3d.cull_mask = selected_camera_3d.cull_mask
 	
-	# Sync camera settings to selected and to project window size.
-	preview_camera_3d.fov = selected_camera_3d.fov
-	preview_camera_3d.projection = selected_camera_3d.projection
-	preview_camera_3d.size = selected_camera_3d.size
-	preview_camera_3d.cull_mask = selected_camera_3d.cull_mask
+	if selected_camera_2d:
+		preview_camera_2d.offset = selected_camera_2d.offset
+		preview_camera_2d.zoom = selected_camera_2d.zoom
 
-func link_with_camera(camera: Camera3D) -> void:
+func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	# TODO: Camera may not be ready since this method is called in `_enter_tree` 
 	# in the plugin because of a workaround for: 
 	# https://github.com/godotengine/godot-proposals/issues/2081
 	if not preview_camera_3d:
 		return request_hide()
 		
+	sub_viewport.disable_3d = false
+	sub_viewport.world_3d = camera_3d.get_world_3d()
+		
 	remote_transform_3d = RemoteTransform3D.new()
 	
 	remote_transform_3d.remote_path = preview_camera_3d.get_path()
 	remote_transform_3d.use_global_coordinates = true
 	
-	camera.add_child(remote_transform_3d)
-	selected_camera_3d = camera
+	camera_3d.add_child(remote_transform_3d)
+	selected_camera_3d = camera_3d
 	
-func link_with_camera_2d(camera: Camera2D) -> void:
+	camera_type = CameraType.CAMERA_3D
+	
+func link_with_camera_2d(camera_2d: Camera2D) -> void:
 	if not preview_camera_2d:
 		return request_hide()
+		
+	sub_viewport.disable_3d = true
+	sub_viewport.world_2d = camera_2d.get_world_2d()
 		
 	remote_transform_2d = RemoteTransform2D.new()
 	
 	remote_transform_2d.remote_path = preview_camera_2d.get_path()
 	remote_transform_2d.use_global_coordinates = true
 	
-	camera.add_child(remote_transform_2d)
-	selected_camera_2d = camera
+	camera_2d.add_child(remote_transform_2d)
+	selected_camera_2d = camera_2d
+	
+	camera_type = CameraType.CAMERA_2D
 
 func unlink_camera() -> void:
 	if selected_camera_3d:
@@ -196,6 +218,11 @@ func request_show() -> void:
 	visible = true
 	
 func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
+	var margin: Vector2 = margin_3d
+	
+	if camera_type == CameraType.CAMERA_2D:
+		margin = margin_2d
+	
 	match pinned_position:
 		PinnedPosition.LEFT:
 			return Vector2.ZERO - Vector2(0, panel.size.y) - Vector2(-margin.x, margin.y)

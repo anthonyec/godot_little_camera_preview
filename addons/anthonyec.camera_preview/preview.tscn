@@ -119,7 +119,6 @@ theme_override_constants/margin_bottom = 4
 
 [node name="ResizeLeftHandle" type="Button" parent="Panel/OverlayMarginContainer"]
 unique_name_in_owner = true
-visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
@@ -139,7 +138,6 @@ flat = true
 
 [node name="LockButton" type="Button" parent="Panel/OverlayMarginContainer"]
 unique_name_in_owner = true
-visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 8
@@ -151,7 +149,9 @@ flat = true
 [node name="SubViewport" type="SubViewport" parent="Panel"]
 unique_name_in_owner = true
 handle_input_locally = false
+gui_disable_input = true
 size = Vector2i(450, 253)
+size_2d_override = Vector2i(450, 253)
 
 [node name="Camera3D" type="Camera3D" parent="Panel/SubViewport"]
 unique_name_in_owner = true
@@ -159,6 +159,7 @@ current = true
 
 [node name="Camera2D" type="Camera2D" parent="Panel/SubViewport"]
 unique_name_in_owner = true
+ignore_rotation = false
 
 [connection signal="button_down" from="Panel/DragHandle" to="." method="_on_drag_handle_button_down"]
 [connection signal="button_up" from="Panel/DragHandle" to="." method="_on_drag_handle_button_up"]
