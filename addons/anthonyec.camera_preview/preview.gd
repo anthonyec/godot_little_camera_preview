@@ -56,6 +56,13 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not visible: return
 	
+	var width = ProjectSettings.get_setting("display/window/size/viewport_width")
+	var height = ProjectSettings.get_setting("display/window/size/viewport_height")
+	viewport_ratio = float(height) / float(width)
+	
+	var viewport_size = Vector2(panel.size.x, panel.size.x * viewport_ratio)
+	sub_viewport.size = viewport_size
+	
 	match state:
 		InteractionState.NONE:
 			# Constrain panel size to aspect ratio and min and max sizes.
@@ -115,7 +122,7 @@ func _process(_delta: float) -> void:
 			
 			state = InteractionState.ANIMATE_INTO_PLACE
 			
-	# TODO: I couldn't get `mouse_entered` and `mouse_exited` events to work 
+	# I couldn't get `mouse_entered` and `mouse_exited` events to work 
 	# nicely, so I use rect method instead. Plus using this method it's easy to
 	# grow the hit area size.
 	var panel_hover_rect = Rect2(panel.global_position, panel.size)
@@ -137,13 +144,7 @@ func _process(_delta: float) -> void:
 	preview_camera.fov = selected_camera.fov
 	preview_camera.projection = selected_camera.projection
 	preview_camera.size = selected_camera.size
-	
-	# TODO: Should I use a viewport size here instead?
-	var width = ProjectSettings.get_setting("display/window/size/viewport_width")
-	var height = ProjectSettings.get_setting("display/window/size/viewport_height")
-	
-	viewport_ratio = float(height) / float(width)
-	sub_viewport.size.y = sub_viewport.size.x * viewport_ratio
+	preview_camera.cull_mask = selected_camera.cull_mask
 
 func link_with_camera(camera: Camera3D) -> void:
 	# TODO: Camera may not be ready since this method is called in `_enter_tree` 
@@ -159,22 +160,14 @@ func link_with_camera(camera: Camera3D) -> void:
 	
 	camera.add_child(remote_transform)
 	selected_camera = camera
-	
-	#if not selected_camera.tree_exited.is_connected(unlink_camera):
-		#print("ADD EVENTO")
-		#selected_camera.tree_exiting.connect(unlink_camera)
-		#
-	#print(selected_camera.tree_exited.get_connections())
 
-	
 func unlink_camera() -> void:
 	if not selected_camera: return
 	
-	print("UNLINKO?", selected_camera)
 	selected_camera.remove_child(remote_transform)
 	selected_camera = null
 	is_locked = false
-	lock_button.toggle_mode = false
+	lock_button.button_pressed = false
 	
 func request_hide() -> void:
 	if is_locked: return

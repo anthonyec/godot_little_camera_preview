@@ -15,7 +15,7 @@ config/features=PackedStringArray("4.2", "GL Compatibility")
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/camera_preview/plugin.cfg")
+enabled=PackedStringArray("res://addons/anthonyec.camera_preview/plugin.cfg")
 
 [rendering]
 

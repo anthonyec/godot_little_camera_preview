@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-const preview_scene = preload("res://addons/camera_preview/preview.tscn")
+const preview_scene = preload("res://addons/anthonyec.camera_preview/preview.tscn")
 
 var preview: CameraPreview
 var current_main_screen_name: String
@@ -46,13 +46,28 @@ func _on_editor_selection_changed() -> void:
 	for node in selected_nodes:
 		if node is Camera3D:
 			selected_camera = node as Camera3D
-			
+			break
+	
 	# Show the preview panel and create a remote transform in the selected cam.
 	if selected_camera:
+		var is_different_camera = selected_camera != preview.selected_camera
+		
+		# TODO: A bit messy.
+		if is_different_camera:
+			if preview.selected_camera and preview.selected_camera.tree_exiting.is_connected(_on_selected_camera_tree_exiting):
+				preview.selected_camera.tree_exiting.disconnect(_on_selected_camera_tree_exiting)
+			
+			if not selected_camera.tree_exiting.is_connected(_on_selected_camera_tree_exiting):
+				selected_camera.tree_exiting.connect(_on_selected_camera_tree_exiting)
+		
 		preview.link_with_camera(selected_camera)
 		preview.request_show()
+		
 	else:
 		preview.request_hide()
 	
 func is_main_screen_viewport() -> bool:
 	return current_main_screen_name == "3D"
+
+func _on_selected_camera_tree_exiting() -> void:
+	preview.unlink_camera()
