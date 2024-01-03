@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://cidjeswmik5ej"]
+
+[sub_resource type="Gradient" id="Gradient_k0pan"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_51jp7"]
+gradient = SubResource("Gradient_k0pan")
+
+[node name="Node3D" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(172, 91)
+texture = SubResource("GradientTexture2D_51jp7")
+
+[node name="Camera2D" type="Camera2D" parent="."]

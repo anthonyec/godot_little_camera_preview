@@ -25,7 +25,8 @@ const max_panel_width_ratio: float = 0.6
 
 @onready var panel: Panel = %Panel
 @onready var placeholder: Panel = %Placeholder
-@onready var preview_camera: Camera3D = %Camera3D
+@onready var preview_camera_3d: Camera3D = %Camera3D
+@onready var preview_camera_2d: Camera2D = %Camera2D
 @onready var sub_viewport: SubViewport = %SubViewport
 @onready var resize_left_handle: Button = %ResizeLeftHandle
 @onready var resize_right_handle: Button = %ResizeRightHandle
@@ -35,8 +36,10 @@ var pinned_position: PinnedPosition = PinnedPosition.RIGHT
 var viewport_ratio: float = 1
 var is_locked: bool
 var show_controls: bool
-var selected_camera: Camera3D
-var remote_transform: RemoteTransform3D
+var selected_camera_3d: Camera3D
+var selected_camera_2d: Camera2D
+var remote_transform_3d: RemoteTransform3D
+var remote_transform_2d: RemoteTransform2D
 
 var state: InteractionState = InteractionState.NONE
 var initial_mouse_position: Vector2
@@ -138,34 +141,50 @@ func _process(_delta: float) -> void:
 	lock_button.visible = show_controls or is_locked
 	placeholder.visible = state == InteractionState.DRAG or state == InteractionState.ANIMATE_INTO_PLACE
 
-	if not selected_camera: return
+	if not selected_camera_3d: return
 	
 	# Sync camera settings to selected and to project window size.
-	preview_camera.fov = selected_camera.fov
-	preview_camera.projection = selected_camera.projection
-	preview_camera.size = selected_camera.size
-	preview_camera.cull_mask = selected_camera.cull_mask
+	preview_camera_3d.fov = selected_camera_3d.fov
+	preview_camera_3d.projection = selected_camera_3d.projection
+	preview_camera_3d.size = selected_camera_3d.size
+	preview_camera_3d.cull_mask = selected_camera_3d.cull_mask
 
 func link_with_camera(camera: Camera3D) -> void:
 	# TODO: Camera may not be ready since this method is called in `_enter_tree` 
 	# in the plugin because of a workaround for: 
 	# https://github.com/godotengine/godot-proposals/issues/2081
-	if not preview_camera:
+	if not preview_camera_3d:
 		return request_hide()
 		
-	remote_transform = RemoteTransform3D.new()
+	remote_transform_3d = RemoteTransform3D.new()
 	
-	remote_transform.remote_path = preview_camera.get_path()
-	remote_transform.use_global_coordinates = true
+	remote_transform_3d.remote_path = preview_camera_3d.get_path()
+	remote_transform_3d.use_global_coordinates = true
 	
-	camera.add_child(remote_transform)
-	selected_camera = camera
+	camera.add_child(remote_transform_3d)
+	selected_camera_3d = camera
+	
+func link_with_camera_2d(camera: Camera2D) -> void:
+	if not preview_camera_2d:
+		return request_hide()
+		
+	remote_transform_2d = RemoteTransform2D.new()
+	
+	remote_transform_2d.remote_path = preview_camera_2d.get_path()
+	remote_transform_2d.use_global_coordinates = true
+	
+	camera.add_child(remote_transform_2d)
+	selected_camera_2d = camera
 
 func unlink_camera() -> void:
-	if not selected_camera: return
+	if selected_camera_3d:
+		selected_camera_3d.remove_child(remote_transform_3d)
+		selected_camera_3d = null
 	
-	selected_camera.remove_child(remote_transform)
-	selected_camera = null
+	if selected_camera_2d:
+		selected_camera_2d.remove_child(remote_transform_2d)
+		selected_camera_2d = null
+	
 	is_locked = false
 	lock_button.button_pressed = false
 	

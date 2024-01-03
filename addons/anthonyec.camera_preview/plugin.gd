@@ -41,33 +41,33 @@ func _on_editor_selection_changed() -> void:
 	preview.visible = true
 		
 	var selected_nodes = EditorInterface.get_selection().get_selected_nodes()
-	var selected_camera: Camera3D
+	var selected_camera_3d: Camera3D
 	
 	for node in selected_nodes:
 		if node is Camera3D:
-			selected_camera = node as Camera3D
+			selected_camera_3d = node as Camera3D
 			break
 	
 	# Show the preview panel and create a remote transform in the selected cam.
-	if selected_camera:
-		var is_different_camera = selected_camera != preview.selected_camera
+	if selected_camera_3d:
+		var is_different_camera = selected_camera_3d != preview.selected_camera_3d
 		
 		# TODO: A bit messy.
 		if is_different_camera:
-			if preview.selected_camera and preview.selected_camera.tree_exiting.is_connected(_on_selected_camera_tree_exiting):
-				preview.selected_camera.tree_exiting.disconnect(_on_selected_camera_tree_exiting)
+			if preview.selected_camera_3d and preview.selected_camera_3d.tree_exiting.is_connected(_on_selected_camera_3d_tree_exiting):
+				preview.selected_camera_3d.tree_exiting.disconnect(_on_selected_camera_3d_tree_exiting)
 			
-			if not selected_camera.tree_exiting.is_connected(_on_selected_camera_tree_exiting):
-				selected_camera.tree_exiting.connect(_on_selected_camera_tree_exiting)
+			if not selected_camera_3d.tree_exiting.is_connected(_on_selected_camera_3d_tree_exiting):
+				selected_camera_3d.tree_exiting.connect(_on_selected_camera_3d_tree_exiting)
 		
-		preview.link_with_camera(selected_camera)
+		preview.link_with_camera(selected_camera_3d)
 		preview.request_show()
 		
 	else:
 		preview.request_hide()
 	
 func is_main_screen_viewport() -> bool:
-	return current_main_screen_name == "3D"
+	return current_main_screen_name == "3D" or current_main_screen_name == "2D"
 
-func _on_selected_camera_tree_exiting() -> void:
+func _on_selected_camera_3d_tree_exiting() -> void:
 	preview.unlink_camera()
