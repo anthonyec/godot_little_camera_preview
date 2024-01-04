@@ -8,7 +8,7 @@ gradient = SubResource("Gradient_k0pan")
 [node name="Node3D" type="Node2D"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(348, -98)
+position = Vector2(282, -131)
 texture = SubResource("GradientTexture2D_51jp7")
 
 [node name="Camera2D" type="Camera2D" parent="."]

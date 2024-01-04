@@ -16,8 +16,19 @@ func _enter_tree() -> void:
 	# Initialise preview panel and add to main screen.
 	preview = preview_scene.instantiate() as CameraPreview
 	
-	# TODO: In 4.1 this is no longer needed.
-	preview.editor_theme = editor_interface.get_inspector().theme
+	# TODO: In 4.1 this is no longer needed and can be accessed directly with 
+	# the `EditorInterface` singleton.
+	var editor_theme = editor_interface.get_base_control().theme
+	var resize_left_icon: Texture2D = editor_theme.get_icon("GuiResizerTopLeft", "EditorIcons")
+
+	# Create a version of the icon for top right.
+	var resize_right_icon_image = resize_left_icon.get_image()
+#	resize_right_icon_image.flip_x()
+	
+	preview.resize_left_icon = resize_left_icon
+	preview.resize_right_icon = ImageTexture.create_from_image(resize_right_icon_image)
+	preview.lock_icon = editor_theme.get_icon("Pin", "EditorIcons")
+	
 	preview.request_hide()
 	
 	var main_screen = editor_interface.get_editor_main_screen()
