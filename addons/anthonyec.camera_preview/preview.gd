@@ -56,9 +56,14 @@ var initial_panel_position: Vector2
 func _ready() -> void:
 	if not Engine.is_editor_hint(): return
 	
-	var resize_icon = EditorInterface.get_editor_theme().get_icon("GuiResizerTopLeft", "EditorIcons")
+	var resize_icon: Texture2D  = EditorInterface.get_editor_theme().get_icon("GuiResizerTopLeft", "EditorIcons")
+
+	# Create a version of the icon for top right.
+	var resize_icon_image = resize_icon.get_image()
+	resize_icon_image.flip_x()
+	
 	resize_left_handle.icon = resize_icon
-	resize_right_handle.icon = resize_icon
+	resize_right_handle.icon = ImageTexture.create_from_image(resize_icon_image)
 	
 	var lock_icon = EditorInterface.get_editor_theme().get_icon("Pin", "EditorIcons")
 	lock_button.icon = lock_icon
@@ -168,6 +173,16 @@ func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	if not preview_camera_3d:
 		return request_hide()
 		
+	var is_different_camera = camera_3d != preview_camera_3d
+	
+	# TODO: A bit messy.
+	if is_different_camera:
+		if preview_camera_3d.tree_exiting.is_connected(unlink_camera):
+			preview_camera_3d.tree_exiting.disconnect(unlink_camera)
+		
+		if not camera_3d.tree_exiting.is_connected(unlink_camera):
+			camera_3d.tree_exiting.connect(unlink_camera)
+		
 	sub_viewport.disable_3d = false
 	sub_viewport.world_3d = camera_3d.get_world_3d()
 		
@@ -184,6 +199,16 @@ func link_with_camera_3d(camera_3d: Camera3D) -> void:
 func link_with_camera_2d(camera_2d: Camera2D) -> void:
 	if not preview_camera_2d:
 		return request_hide()
+	
+	var is_different_camera = camera_2d != preview_camera_2d
+	
+	# TODO: A bit messy.
+	if is_different_camera:
+		if preview_camera_2d.tree_exiting.is_connected(unlink_camera):
+			preview_camera_2d.tree_exiting.disconnect(unlink_camera)
+		
+		if not camera_2d.tree_exiting.is_connected(unlink_camera):
+			camera_2d.tree_exiting.connect(unlink_camera)
 		
 	sub_viewport.disable_3d = true
 	sub_viewport.world_2d = camera_2d.get_world_2d()

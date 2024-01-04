@@ -14,18 +14,19 @@ func _enter_tree() -> void:
 	preview = preview_scene.instantiate() as CameraPreview
 	preview.request_hide()
 	
-	# TODO: Currently there is no API to get the main screen name without 
-	# listening to the `EditorPlugin.main_screen_changed` signal:
-	# https://github.com/godotengine/godot-proposals/issues/2081
-	EditorInterface.set_main_screen_editor("Script")
-	EditorInterface.set_main_screen_editor("3D")
-	
 	var main_screen = EditorInterface.get_editor_main_screen()
 	main_screen.add_child(preview)
 	
 func _exit_tree() -> void:
 	if preview:
 		preview.queue_free()
+		
+func _ready() -> void:
+	# TODO: Currently there is no API to get the main screen name without 
+	# listening to the `EditorPlugin.main_screen_changed` signal:
+	# https://github.com/godotengine/godot-proposals/issues/2081
+	EditorInterface.set_main_screen_editor("Script")
+	EditorInterface.set_main_screen_editor("3D")
 	
 func _on_main_screen_changed(screen_name: String) -> void:
 	current_main_screen_name = screen_name
@@ -49,16 +50,6 @@ func _on_editor_selection_changed() -> void:
 	var selected_camera_2d: Camera2D = find_camera_2d_or_null(selected_nodes)
 	
 	if selected_camera_3d and current_main_screen_name == "3D":
-		var is_different_camera = selected_camera_3d != preview.selected_camera_3d
-		
-		# TODO: A bit messy.
-		if is_different_camera:
-			if preview.selected_camera_3d and preview.selected_camera_3d.tree_exiting.is_connected(_on_selected_camera_3d_tree_exiting):
-				preview.selected_camera_3d.tree_exiting.disconnect(_on_selected_camera_3d_tree_exiting)
-			
-			if not selected_camera_3d.tree_exiting.is_connected(_on_selected_camera_3d_tree_exiting):
-				selected_camera_3d.tree_exiting.connect(_on_selected_camera_3d_tree_exiting)
-		
 		preview.link_with_camera_3d(selected_camera_3d)
 		preview.request_show()
 	
