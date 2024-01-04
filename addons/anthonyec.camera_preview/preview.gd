@@ -29,9 +29,7 @@ const margin_2d: Vector2 = Vector2(40, 30)
 const min_panel_width: float = 150
 const max_panel_width_ratio: float = 0.6
 
-@export var resize_left_icon: Texture2D
-@export var resize_right_icon: Texture2D
-@export var lock_icon: Texture2D
+@export var editor_theme: Theme
 
 @onready var panel: Panel = %Panel
 @onready var placeholder: Panel = %Placeholder
@@ -59,13 +57,18 @@ var initial_panel_position: Vector2
 
 func _ready() -> void:
 	if not Engine.is_editor_hint(): return
+	if not editor_theme: return
 	
-	# TODO: In Godot 4.1 the theme can be accessed directly from 
-	# the `EditorInterface` singleton.
-	if not resize_left_icon or not resize_right_icon: return
+	var resize_icon: Texture2D  = editor_theme.get_icon("GuiResizerTopLeft", "EditorIcons")
 
-	resize_left_handle.icon = resize_left_icon
-	resize_right_handle.icon = resize_right_icon
+	# Create a version of the icon for top right.
+	var resize_icon_image = resize_icon.get_image()
+	resize_icon_image.flip_x()
+	
+	resize_left_handle.icon = resize_icon
+	resize_right_handle.icon = ImageTexture.create_from_image(resize_icon_image)
+	
+	var lock_icon = editor_theme.get_icon("Pin", "EditorIcons")
 	lock_button.icon = lock_icon
 
 func _process(_delta: float) -> void:
@@ -172,9 +175,6 @@ func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	# https://github.com/godotengine/godot-proposals/issues/2081
 	if not preview_camera_3d:
 		return request_hide()
-	
-	# In Godot 4.0 this hides the visible purple border. Fixed in later versions.
-	preview_camera_2d.visible = false
 		
 	var is_different_camera = camera_3d != preview_camera_3d
 	
@@ -202,8 +202,6 @@ func link_with_camera_3d(camera_3d: Camera3D) -> void:
 func link_with_camera_2d(camera_2d: Camera2D) -> void:
 	if not preview_camera_2d:
 		return request_hide()
-		
-	preview_camera_2d.visible = true
 	
 	var is_different_camera = camera_2d != preview_camera_2d
 	

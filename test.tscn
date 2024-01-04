@@ -13,7 +13,7 @@ transform = Transform3D(1, 0, 0, 0, 0.202172, -0.97935, 0, 0.97935, 0.202172, 0.
 cull_mask = 1040383
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.0121995, 0.844966, -0.534681, -0.999926, 0.010309, -0.00652334, 0, 0.534721, 0.845029, -0.156427, 0.483453, -2.51037)
+transform = Transform3D(0.0121995, 0.844966, -0.534681, -0.999926, 0.010309, -0.00652334, 0, 0.534721, 0.845029, 0.171621, 0.483453, -3.34432)
 mesh = SubResource("BoxMesh_57jml")
 
 [node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
