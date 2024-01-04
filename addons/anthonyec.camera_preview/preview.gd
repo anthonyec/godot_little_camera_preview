@@ -29,8 +29,6 @@ const margin_2d: Vector2 = Vector2(40, 30)
 const min_panel_width: float = 150
 const max_panel_width_ratio: float = 0.6
 
-@export var editor_theme: Theme
-
 @onready var panel: Panel = %Panel
 @onready var placeholder: Panel = %Placeholder
 @onready var preview_camera_3d: Camera3D = %Camera3D
@@ -57,9 +55,8 @@ var initial_panel_position: Vector2
 
 func _ready() -> void:
 	if not Engine.is_editor_hint(): return
-	if not editor_theme: return
 	
-	var resize_icon: Texture2D  = editor_theme.get_icon("GuiResizerTopLeft", "EditorIcons")
+	var resize_icon: Texture2D  = EditorInterface.get_editor_theme().get_icon("GuiResizerTopLeft", "EditorIcons")
 
 	# Create a version of the icon for top right.
 	var resize_icon_image = resize_icon.get_image()
@@ -68,7 +65,7 @@ func _ready() -> void:
 	resize_left_handle.icon = resize_icon
 	resize_right_handle.icon = ImageTexture.create_from_image(resize_icon_image)
 	
-	var lock_icon = editor_theme.get_icon("Pin", "EditorIcons")
+	var lock_icon = EditorInterface.get_editor_theme().get_icon("Pin", "EditorIcons")
 	lock_button.icon = lock_icon
 
 func _process(_delta: float) -> void:
