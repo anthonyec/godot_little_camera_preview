@@ -3,18 +3,24 @@ extends EditorPlugin
 
 const preview_scene = preload("res://addons/anthonyec.camera_preview/preview.tscn")
 
+var editor_interface: EditorInterface
 var preview: CameraPreview
 var current_main_screen_name: String
 
 func _enter_tree() -> void:
+	editor_interface = get_editor_interface()
+	
 	main_screen_changed.connect(_on_main_screen_changed)
-	EditorInterface.get_selection().selection_changed.connect(_on_editor_selection_changed)
+	editor_interface.get_selection().selection_changed.connect(_on_editor_selection_changed)
 	
 	# Initialise preview panel and add to main screen.
 	preview = preview_scene.instantiate() as CameraPreview
+	
+	# TODO: In 4.1 this is no longer needed.
+	preview.editor_theme = editor_interface.get_inspector().theme
 	preview.request_hide()
 	
-	var main_screen = EditorInterface.get_editor_main_screen()
+	var main_screen = editor_interface.get_editor_main_screen()
 	main_screen.add_child(preview)
 	
 func _exit_tree() -> void:
@@ -25,13 +31,13 @@ func _ready() -> void:
 	# TODO: Currently there is no API to get the main screen name without 
 	# listening to the `EditorPlugin.main_screen_changed` signal:
 	# https://github.com/godotengine/godot-proposals/issues/2081
-	EditorInterface.set_main_screen_editor("Script")
-	EditorInterface.set_main_screen_editor("3D")
+	editor_interface.set_main_screen_editor("Script")
+	editor_interface.set_main_screen_editor("3D")
 	
 func _on_main_screen_changed(screen_name: String) -> void:
 	current_main_screen_name = screen_name
 	
-	 # TODO: Bit of a hack to prevent pinned staying between view changes on the same scene.
+	# TODO: Bit of a hack to prevent pinned staying between view changes on the same scene.
 	preview.unlink_camera()
 	_on_editor_selection_changed()
 
@@ -44,7 +50,7 @@ func _on_editor_selection_changed() -> void:
 		
 	preview.visible = true
 	
-	var selected_nodes = EditorInterface.get_selection().get_selected_nodes()
+	var selected_nodes = editor_interface.get_selection().get_selected_nodes()
 	
 	var selected_camera_3d: Camera3D = find_camera_3d_or_null(selected_nodes)
 	var selected_camera_2d: Camera2D = find_camera_2d_or_null(selected_nodes)
