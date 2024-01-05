@@ -26,7 +26,7 @@ enum InteractionState {
 
 const margin_3d: Vector2 = Vector2(20, 20)
 const margin_2d: Vector2 = Vector2(40, 30)
-const min_panel_width: float = 150
+const min_panel_width: float = 250
 const max_panel_width_ratio: float = 0.6
 
 @onready var panel: Panel = %Panel
@@ -41,6 +41,7 @@ const max_panel_width_ratio: float = 0.6
 var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
 var viewport_ratio: float = 1
+var screen_scale: float = 1
 var is_locked: bool
 var show_controls: bool
 var selected_camera_3d: Camera3D
@@ -54,19 +55,7 @@ var initial_panel_size: Vector2
 var initial_panel_position: Vector2
 
 func _ready() -> void:
-	if not Engine.is_editor_hint(): return
-	
-	var resize_icon: Texture2D  = EditorInterface.get_editor_theme().get_icon("GuiResizerTopLeft", "EditorIcons")
-
-	# Create a version of the icon for top right.
-	var resize_icon_image = resize_icon.get_image()
-	resize_icon_image.flip_x()
-	
-	resize_left_handle.icon = resize_icon
-	resize_right_handle.icon = ImageTexture.create_from_image(resize_icon_image)
-	
-	var lock_icon = EditorInterface.get_editor_theme().get_icon("Pin", "EditorIcons")
-	lock_button.icon = lock_icon
+	screen_scale = DisplayServer.screen_get_scale()
 
 func _process(_delta: float) -> void:
 	if not visible: return
@@ -82,10 +71,12 @@ func _process(_delta: float) -> void:
 	
 	match state:
 		InteractionState.NONE:
-			# Constrain panel size to aspect ratio and min and max sizes.
+			# Constrain panel size to aspect ratio.
 			panel.size.y = panel.size.x * viewport_ratio
+			
+			# Clamp size.
 			panel.size = panel.size.clamp(
-				Vector2(min_panel_width, min_panel_width * viewport_ratio),
+				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
 				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
 			)
 			
@@ -100,10 +91,12 @@ func _process(_delta: float) -> void:
 			if pinned_position == PinnedPosition.RIGHT:
 				panel.size = initial_panel_size + delta_mouse_position
 				
-			# Constrain panel size to aspect ratio and min and max sizes.
+			# Constrain panel size to aspect ratio.
 			panel.size.y = panel.size.x * viewport_ratio
+			
+			# Clamp size.
 			panel.size = panel.size.clamp(
-				Vector2(min_panel_width, min_panel_width * viewport_ratio),
+				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
 				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
 			)
 			
