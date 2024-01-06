@@ -37,6 +37,7 @@ const max_panel_width_ratio: float = 0.6
 @onready var resize_left_handle: Button = %ResizeLeftHandle
 @onready var resize_right_handle: Button = %ResizeRightHandle
 @onready var lock_button: Button = %LockButton
+@onready var gradient: TextureRect = %Gradient
 
 var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
@@ -147,7 +148,8 @@ func _process(_delta: float) -> void:
 	resize_right_handle.visible = show_controls and pinned_position == PinnedPosition.LEFT
 	lock_button.visible = show_controls or is_locked
 	placeholder.visible = state == InteractionState.DRAG or state == InteractionState.ANIMATE_INTO_PLACE
-
+	gradient.visible = show_controls
+	
 	# Sync camera settings.
 	if selected_camera_3d:
 		preview_camera_3d.fov = selected_camera_3d.fov

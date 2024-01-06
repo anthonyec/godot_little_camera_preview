@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://xybmfvufjuv"]
+[gd_scene load_steps=8 format=3 uid="uid://xybmfvufjuv"]
 
 [ext_resource type="Script" path="res://addons/anthonyec.camera_preview/preview.gd" id="1_6b32r"]
 [ext_resource type="Texture2D" uid="uid://do6d60od41vmg" path="res://addons/anthonyec.camera_preview/Pin.svg" id="2_p0pa8"]
@@ -7,6 +7,14 @@
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_pt22t"]
 viewport_path = NodePath("Panel/SubViewport")
+
+[sub_resource type="Gradient" id="Gradient_11p6r"]
+offsets = PackedFloat32Array(0, 0.3, 0.6, 1)
+colors = PackedColorArray(0, 0, 0, 0.235294, 0, 0, 0, 0.0784314, 0, 0, 0, 0.0784314, 0, 0, 0, 0.235294)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_4dkve"]
+gradient = SubResource("Gradient_11p6r")
+fill_to = Vector2(2.08165e-12, 1)
 
 [node name="Preview" type="Control"]
 z_index = 999
@@ -44,8 +52,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -470.0
-offset_top = -273.125
+offset_left = -520.0
+offset_top = -301.25
 offset_right = -20.0
 offset_bottom = -20.0
 grow_horizontal = 0
@@ -81,6 +89,18 @@ grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 0
 flat = true
+
+[node name="Gradient" type="TextureRect" parent="Panel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_4dkve")
 
 [node name="OverlayMarginContainer" type="MarginContainer" parent="Panel"]
 clip_contents = true
@@ -135,8 +155,8 @@ icon_alignment = 1
 unique_name_in_owner = true
 handle_input_locally = false
 gui_disable_input = true
-size = Vector2i(450, 253)
-size_2d_override = Vector2i(450, 253)
+size = Vector2i(500, 281)
+size_2d_override = Vector2i(500, 281)
 
 [node name="Camera3D" type="Camera3D" parent="Panel/SubViewport"]
 unique_name_in_owner = true
