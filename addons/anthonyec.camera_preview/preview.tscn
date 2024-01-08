@@ -14,6 +14,8 @@ colors = PackedColorArray(0, 0, 0, 0.235294, 0, 0, 0, 0.0784314, 0, 0, 0, 0.0784
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_4dkve"]
 gradient = SubResource("Gradient_11p6r")
+width = 256
+height = 256
 fill_to = Vector2(2.08165e-12, 1)
 
 [node name="Preview" type="Control"]
