@@ -146,15 +146,36 @@ func _process(_delta: float) -> void:
 	gradient.visible = show_controls
 	
 	# Sync camera settings.
-	if selected_camera_3d:
+	if camera_type == CameraType.CAMERA_3D and selected_camera_3d:
+		# TODO: Don't think this is needed and can just assign `panel.size` directly.
+		var viewport_size = Vector2(panel.size.x, panel.size.x * viewport_ratio)
+		sub_viewport.size = viewport_size
+		
 		preview_camera_3d.fov = selected_camera_3d.fov
 		preview_camera_3d.projection = selected_camera_3d.projection
 		preview_camera_3d.size = selected_camera_3d.size
 		preview_camera_3d.cull_mask = selected_camera_3d.cull_mask
 	
-	if selected_camera_2d:
+	if camera_type == CameraType.CAMERA_2D and selected_camera_2d:
+		var ratio = window_width / panel.size.x
+		
+		# TODO: Is there a better way to fix this?
+		# The camera border is visible sometimes due to pixel rounding. 
+		# Subtract 1px from right and bottom to hide this.
+		var hide_camera_border_fix = Vector2(1, 1)
+		
+		sub_viewport.size = panel.size
+		sub_viewport.size_2d_override = (panel.size - hide_camera_border_fix) * ratio
+		sub_viewport.size_2d_override_stretch = true
+
 		preview_camera_2d.offset = selected_camera_2d.offset
 		preview_camera_2d.zoom = selected_camera_2d.zoom
+		preview_camera_2d.ignore_rotation = selected_camera_2d.ignore_rotation
+		preview_camera_2d.anchor_mode = selected_camera_2d.anchor_mode
+		preview_camera_2d.limit_left = selected_camera_2d.limit_left
+		preview_camera_2d.limit_right = selected_camera_2d.limit_right
+		preview_camera_2d.limit_top = selected_camera_2d.limit_top
+		preview_camera_2d.limit_bottom = selected_camera_2d.limit_bottom
 
 func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	# TODO: Camera may not be ready since this method is called in `_enter_tree` 
