@@ -157,8 +157,7 @@ icon_alignment = 1
 unique_name_in_owner = true
 handle_input_locally = false
 gui_disable_input = true
-size = Vector2i(500, 281)
-size_2d_override = Vector2i(500, 281)
+size_2d_override_stretch = true
 
 [node name="Camera3D" type="Camera3D" parent="Panel/SubViewport"]
 unique_name_in_owner = true

@@ -61,14 +61,9 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not visible: return
 	
-	var width = ProjectSettings.get_setting("display/window/size/viewport_width")
-	var height = ProjectSettings.get_setting("display/window/size/viewport_height")
-	viewport_ratio = float(height) / float(width)
-	
-	var viewport_size = Vector2(panel.size.x, panel.size.x * viewport_ratio)
-	sub_viewport.size = viewport_size
-	# TODO: Do something different here to scale viewport correctly in 2D.
-	sub_viewport.size_2d_override = viewport_size
+	var window_width = float(ProjectSettings.get_setting("display/window/size/viewport_width"))
+	var window_height = float(ProjectSettings.get_setting("display/window/size/viewport_height"))
+	viewport_ratio = window_height / window_width
 	
 	match state:
 		InteractionState.NONE:
