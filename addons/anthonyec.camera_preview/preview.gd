@@ -17,11 +17,11 @@ enum InteractionState {
 	NONE,
 	RESIZE,
 	DRAG,
+	ANIMATING,
 
 	# Animation is split into 2 seperate states so that the tween is only 
 	# invoked once in the "start" state. 
 	START_ANIMATE_INTO_PLACE,
-	ANIMATE_INTO_PLACE,
 }
 
 const margin_3d: Vector2 = Vector2(20, 20)
@@ -54,11 +54,12 @@ var state: InteractionState = InteractionState.NONE
 var initial_mouse_position: Vector2
 var initial_panel_size: Vector2
 var initial_panel_position: Vector2
+var last_mouse_position: Vector2
 
 func _ready() -> void:
 	screen_scale = DisplayServer.screen_get_scale()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not visible: return
 	
 	var window_width = float(ProjectSettings.get_setting("display/window/size/viewport_width"))
@@ -70,33 +71,30 @@ func _process(_delta: float) -> void:
 			# Constrain panel size to aspect ratio.
 			panel.size.y = panel.size.x * viewport_ratio
 			
-			# Clamp size.
-			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
-				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
-			)
-			
+			panel.size = panel.size.lerp(get_clamped_panel_size(), delta * 10)
 			panel.position = get_pinned_position(pinned_position)
 			
 		InteractionState.RESIZE:
-			var delta_mouse_position = initial_mouse_position - get_global_mouse_position()
+			var delta_mouse_position = last_mouse_position - get_global_mouse_position()
+			
+			var min_panel_size = Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio)
+			var max_panel_size = Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
+			
+			# Apply damping (slow down) to resizing when over the max or under the max size.
+			var is_over_size_limit = panel.size.length() > max_panel_size.length() or panel.size.length() < min_panel_size.length()
+			var slow_down = 0.2 if is_over_size_limit else 1
 		
 			if pinned_position == PinnedPosition.LEFT:
-				panel.size = initial_panel_size - delta_mouse_position
+				panel.size -= delta_mouse_position * slow_down
 				
 			if pinned_position == PinnedPosition.RIGHT:
-				panel.size = initial_panel_size + delta_mouse_position
+				panel.size += delta_mouse_position * slow_down
 				
 			# Constrain panel size to aspect ratio.
 			panel.size.y = panel.size.x * viewport_ratio
 			
-			# Clamp size.
-			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
-				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
-			)
-			
 			panel.position = get_pinned_position(pinned_position)
+			last_mouse_position = get_global_mouse_position()
 			
 		InteractionState.DRAG:
 			placeholder.size = panel.size
@@ -126,8 +124,8 @@ func _process(_delta: float) -> void:
 				state = InteractionState.NONE
 			)
 			
-			state = InteractionState.ANIMATE_INTO_PLACE
-			
+			state = InteractionState.ANIMATING
+
 	# I couldn't get `mouse_entered` and `mouse_exited` events to work 
 	# nicely, so I use rect method instead. Plus using this method it's easy to
 	# grow the hit area size.
@@ -135,14 +133,13 @@ func _process(_delta: float) -> void:
 	panel_hover_rect = panel_hover_rect.grow(40)
 	
 	var mouse_position = get_global_mouse_position()
-	
 	show_controls = state != InteractionState.NONE or panel_hover_rect.has_point(mouse_position)
 	
 	# UI visibility.
 	resize_left_handle.visible = show_controls and pinned_position == PinnedPosition.RIGHT
 	resize_right_handle.visible = show_controls and pinned_position == PinnedPosition.LEFT
 	lock_button.visible = show_controls or is_locked
-	placeholder.visible = state == InteractionState.DRAG or state == InteractionState.ANIMATE_INTO_PLACE
+	placeholder.visible = state == InteractionState.DRAG or state == InteractionState.ANIMATING
 	gradient.visible = show_controls
 	
 	# Sync camera settings.
@@ -269,14 +266,23 @@ func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
 			
 	return Vector2.ZERO
 
+func get_clamped_panel_size() -> Vector2:
+	return panel.size.clamp(
+		Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
+		Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
+	)
+	
 func _on_resize_handle_button_down() -> void:
 	if state != InteractionState.NONE: return
 	
 	state = InteractionState.RESIZE
 	initial_mouse_position = get_global_mouse_position()
+	last_mouse_position = get_global_mouse_position()
 	initial_panel_size = panel.size
 
 func _on_resize_handle_button_up() -> void:
+	if state != InteractionState.RESIZE: return
+	
 	state = InteractionState.NONE
 
 func _on_drag_handle_button_down() -> void:
@@ -284,6 +290,7 @@ func _on_drag_handle_button_down() -> void:
 		
 	state = InteractionState.DRAG
 	initial_mouse_position = get_global_mouse_position()
+	last_mouse_position = get_global_mouse_position()
 	initial_panel_position = panel.global_position
 
 func _on_drag_handle_button_up() -> void:
