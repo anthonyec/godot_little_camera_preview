@@ -1,0 +1,60 @@
+[gd_scene load_steps=6 format=3 uid="uid://bngl1nwkr7fdv"]
+
+[ext_resource type="Texture2D" uid="uid://lsylam0o1pmd" path="res://addons/kenney_prototype_textures/light/texture_07.png" id="1_bx47r"]
+[ext_resource type="Texture2D" uid="uid://bqimw5xofyi2h" path="res://addons/kenney_prototype_textures/orange/texture_02.png" id="2_cq3lj"]
+
+[sub_resource type="Environment" id="Environment_5ie3n"]
+background_mode = 1
+background_color = Color(0.113725, 0.12549, 0.164706, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.4, 0.607843, 0.807843, 1)
+tonemap_mode = 3
+ssao_enabled = true
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.27451, 0.305882, 0.376471, 1)
+fog_density = 0.05
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ulw7"]
+albedo_color = Color(0.364706, 0.376471, 0.419608, 1)
+albedo_texture = ExtResource("1_bx47r")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2n0dr"]
+albedo_texture = ExtResource("2_cq3lj")
+
+[node name="Node3D" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_5ie3n")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.85888, -0.202978, 0.470239, -0.281572, 0.579803, 0.764556, -0.427834, -0.789068, 0.440828, 0, 10.7901, 0)
+light_energy = 1.5
+shadow_enabled = true
+
+[node name="Floor" type="CSGBox3D" parent="."]
+transform = Transform3D(0.999999, 0.0013115, 0.000753232, -0.00131088, 0.999999, -0.000799355, -0.000754299, 0.000798348, 0.999999, 0, 0, 0)
+size = Vector3(150, 0.1, 150)
+material = SubResource("StandardMaterial3D_0ulw7")
+
+[node name="Box" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.510167, 0.562209, -0.476599)
+material = SubResource("StandardMaterial3D_2n0dr")
+
+[node name="Box3" type="CSGBox3D" parent="."]
+transform = Transform3D(0.962796, 0, -0.270231, 0, 1, 0, 0.270231, 0, 0.962796, 0.141716, 1.56822, -0.598569)
+material = SubResource("StandardMaterial3D_2n0dr")
+
+[node name="Box2" type="CSGBox3D" parent="."]
+transform = Transform3D(0.897266, 0, 0.44149, 0, 1, 0, -0.44149, 0, 0.897266, 0.595593, 0.551164, -1.02138)
+size = Vector3(1, 1, 2)
+material = SubResource("StandardMaterial3D_2n0dr")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.931279, 0.0131907, -0.364069, 1.55806e-10, 0.999344, 0.0362077, 0.364308, -0.0337194, 0.930668, -1.1631, 1.09871, 2.69637)
+fov = 58.1166
+
+[node name="Camera3D2" type="Camera3D" parent="."]
+transform = Transform3D(-0.35243, 0.737903, -0.57558, 1.62197e-08, 0.615042, 0.788494, 0.935838, 0.277889, -0.216759, -1.96108, 3.04828, -1.34891)
