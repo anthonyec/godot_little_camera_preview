@@ -6,6 +6,8 @@ A Godot editor plugin that shows a picture-in-picture style preview when selecti
 
 Install via the [Asset Library](#) or [download from GitHub.](#)
 
+![Screenshot of little camera preview](./screenshot.png)
+
 ## Installation
 
 - Use **Godot 4.2 or above**
