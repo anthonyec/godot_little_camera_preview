@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://bngl1nwkr7fdv"]
 
-[ext_resource type="Texture2D" uid="uid://lsylam0o1pmd" path="res://addons/kenney_prototype_textures/light/texture_07.png" id="1_bx47r"]
-[ext_resource type="Texture2D" uid="uid://bqimw5xofyi2h" path="res://addons/kenney_prototype_textures/orange/texture_02.png" id="2_cq3lj"]
+[ext_resource type="Texture2D" uid="uid://lsylam0o1pmd" path="res://addons/kenney_prototype_textures/light/texture_07.png" id="1_lvnyt"]
+[ext_resource type="Texture2D" uid="uid://bqimw5xofyi2h" path="res://addons/kenney_prototype_textures/orange/texture_02.png" id="2_s43xh"]
 
 [sub_resource type="Environment" id="Environment_5ie3n"]
 background_mode = 1
@@ -17,12 +17,12 @@ fog_density = 0.05
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ulw7"]
 albedo_color = Color(0.364706, 0.376471, 0.419608, 1)
-albedo_texture = ExtResource("1_bx47r")
+albedo_texture = ExtResource("1_lvnyt")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
 uv1_triplanar = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2n0dr"]
-albedo_texture = ExtResource("2_cq3lj")
+albedo_texture = ExtResource("2_s43xh")
 
 [node name="Node3D" type="Node3D"]
 
@@ -44,7 +44,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.510167, 0.562209, -0.47659
 material = SubResource("StandardMaterial3D_2n0dr")
 
 [node name="Box3" type="CSGBox3D" parent="."]
-transform = Transform3D(0.962796, 0, -0.270231, 0, 1, 0, 0.270231, 0, 0.962796, 0.141716, 1.56822, -0.598569)
+transform = Transform3D(-0.197127, 0, -0.980378, 0, 1, 0, 0.980378, 0, -0.197127, 0.141716, 1.5913, -0.598569)
 material = SubResource("StandardMaterial3D_2n0dr")
 
 [node name="Box2" type="CSGBox3D" parent="."]
@@ -53,8 +53,9 @@ size = Vector3(1, 1, 2)
 material = SubResource("StandardMaterial3D_2n0dr")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(0.931279, 0.0131907, -0.364069, 1.55806e-10, 0.999344, 0.0362077, 0.364308, -0.0337194, 0.930668, -1.1631, 1.09871, 2.69637)
-fov = 58.1166
+transform = Transform3D(0.474765, 0.0131907, -0.880014, 0.0234192, 0.999344, 0.027614, 0.879801, -0.0337194, 0.474145, -0.956245, 1.01507, 2.78054)
+fov = 59.0625
 
 [node name="Camera3D2" type="Camera3D" parent="."]
-transform = Transform3D(-0.35243, 0.737903, -0.57558, 1.62197e-08, 0.615042, 0.788494, 0.935838, 0.277889, -0.216759, -1.96108, 3.04828, -1.34891)
+transform = Transform3D(-0.270463, 0.615613, -0.740183, 0.000464575, 0.768921, 0.639344, 0.96273, 0.172575, -0.208251, -2.46042, 3.01318, -1.48917)
+fov = 69.4097

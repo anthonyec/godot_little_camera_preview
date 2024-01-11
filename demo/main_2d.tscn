@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://b075fh3lrkkmo"]
+
+[ext_resource type="Texture2D" uid="uid://sb8sati8xrni" path="res://addons/kenney_prototype_textures/light/texture_06.png" id="1_6neaq"]
+[ext_resource type="Texture2D" uid="uid://bqimw5xofyi2h" path="res://addons/kenney_prototype_textures/orange/texture_02.png" id="2_fk71s"]
+
+[node name="Node3D" type="Node2D"]
+
+[node name="Texture06" type="Sprite2D" parent="."]
+position = Vector2(313, 280)
+texture = ExtResource("1_6neaq")
+
+[node name="Texture02" type="Sprite2D" parent="."]
+position = Vector2(123, 221)
+scale = Vector2(0.124943, 0.124943)
+texture = ExtResource("2_fk71s")
+
+[node name="Camera2D2" type="Camera2D" parent="."]
+position = Vector2(162, 227)
+rotation = -0.268458
+ignore_rotation = false
+zoom = Vector2(2, 2)
