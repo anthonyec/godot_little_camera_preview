@@ -16,4 +16,4 @@ Install via the [Asset Library](#) or [download from GitHub.](#)
 
 ## Licence
 
-Licensed under the MIT license, see [LICENSE](./LICENCE.md) for more information.
+Licensed under the MIT license, see [LICENSE](./LICENCE) for more information.
