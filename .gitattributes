@@ -1,3 +1,10 @@
 # Normalize EOL for all files that Git considers text files.
 * text=auto eol=lf
+
+# Git LFS for the demo assets.
 demo/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# Only include the addons folder when downloading from the Asset Library.
+/**        export-ignore
+/addons    !export-ignore
+/addons/** !export-ignore
