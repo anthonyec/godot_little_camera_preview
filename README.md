@@ -4,7 +4,7 @@
 
 A Godot editor plugin that shows a picture-in-picture style preview when selecting a 2D or 3D camera.
 
-Install via the [Asset Library](#) or [download from GitHub.](#)
+Install via the [Asset Library](#) or [download from GitHub.](https://github.com/anthonyec/godot_little_camera_preview/archive/d2636431a43e19923853def9b6b25db8539a2b87.zip)
 
 ![Screenshot of little camera preview](./screenshot.png)
 
