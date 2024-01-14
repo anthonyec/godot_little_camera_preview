@@ -34,6 +34,7 @@ const max_panel_width_ratio: float = 0.6
 @onready var preview_camera_3d: Camera3D = %Camera3D
 @onready var preview_camera_2d: Camera2D = %Camera2D
 @onready var sub_viewport: SubViewport = %SubViewport
+@onready var sub_viewport_text_rect: TextureRect = %TextureRect
 @onready var resize_left_handle: Button = %ResizeLeftHandle
 @onready var resize_right_handle: Button = %ResizeRightHandle
 @onready var lock_button: Button = %LockButton
@@ -57,6 +58,14 @@ var initial_panel_position: Vector2
 
 func _ready() -> void:
 	screen_scale = DisplayServer.screen_get_scale()
+	
+	# Setting texture to viewport in code instead of directly in the editor 
+	# because otherwise an error "Path to node is invalid: Panel/SubViewport"
+	# on first load. This is harmless but doesn't look great.
+	#
+	# This is a known issue:
+	# https://github.com/godotengine/godot/issues/27790#issuecomment-499740220
+	sub_viewport_text_rect.texture = sub_viewport.get_texture()
 
 func _process(_delta: float) -> void:
 	if not visible: return
