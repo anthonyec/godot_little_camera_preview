@@ -164,6 +164,11 @@ func _process(_delta: float) -> void:
 		preview_camera_3d.projection = selected_camera_3d.projection
 		preview_camera_3d.size = selected_camera_3d.size
 		preview_camera_3d.cull_mask = selected_camera_3d.cull_mask
+		preview_camera_3d.keep_aspect = selected_camera_3d.keep_aspect
+		preview_camera_3d.near = selected_camera_3d.near
+		preview_camera_3d.far = selected_camera_3d.far
+		preview_camera_3d.h_offset = selected_camera_3d.h_offset
+		preview_camera_3d.v_offset = selected_camera_3d.v_offset
 	
 	if camera_type == CameraType.CAMERA_2D and selected_camera_2d:
 		var ratio = window_width / panel.size.x
