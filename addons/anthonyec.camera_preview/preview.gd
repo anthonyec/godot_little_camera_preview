@@ -24,10 +24,25 @@ enum InteractionState {
 	ANIMATE_INTO_PLACE,
 }
 
-const margin_3d: Vector2 = Vector2(20, 20)
-const margin_2d: Vector2 = Vector2(40, 30)
+class RectOffset:
+	var top: float
+	var right: float
+	var bottom: float
+	var left: float
+	
+	func _init(top: float, right: float, bottom: float, left: float) -> void:
+		self.top = top
+		self.right = right
+		self.bottom = bottom
+		self.left = left
+
+const gap_size: float = 20
 const min_panel_width: float = 250
 const max_panel_width_ratio: float = 0.6
+# Margins are treated like constants but are vars because custom classes cannot 
+# be constants.
+var margin_3d: RectOffset = RectOffset.new(20, 20, 20, 20)
+var margin_2d: RectOffset = RectOffset.new(20, 30, 30, 50)
 
 @onready var panel: Panel = %Panel
 @onready var placeholder: Panel = %Placeholder
@@ -268,18 +283,67 @@ func request_hide() -> void:
 	
 func request_show() -> void:
 	visible = true
+
+## Get additional margin offset specifc what's visible in the viewport.
+## Currently this only returns margin offset for 3D viewport when the scene 
+## information overlay is visible (Perspective > View Information).
+func get_viewport_margin() -> RectOffset:
+	var margin = RectOffset.new(0, 0, 0, 0)
+	
+	if camera_type == CameraType.CAMERA_2D:
+		return margin
+	
+	# There isn't an API for getting the viewport node. Instead it has to be
+	# found by checking the parent's parent of the subviewport and find
+	# the correct node based on name and class.
+	var editor_viewport_3d = EditorInterface.get_editor_viewport_3d(0)
+	var editor_viewport_container_3d = editor_viewport_3d.get_parent().get_parent()
+	
+	# Early return zero margin offset incase editor tree structure has changed.
+	if editor_viewport_container_3d.get_class() != "Node3DEditorViewport":
+		return margin
+		
+	var editor_viewport: Control
+	
+	for child in editor_viewport_container_3d.get_children():
+		if child.name.begins_with("@Control@") and child is Control:
+			editor_viewport = child
+			
+	if not editor_viewport:
+		return margin
+		
+	var viewport_center: Vector2 = editor_viewport.global_position + (editor_viewport.size / 2)
+	
+	for child in editor_viewport.get_children():
+		if not (child is Label): continue
+		
+		var label = child as Label
+		if not label.visible: continue
+		
+		var is_bottom_aligned = label.global_position.y + label.size.y > viewport_center.y
+		var is_left_aligned = label.global_position.x < viewport_center.x
+		var is_right_aligned = label.global_position.x + label.size.x > viewport_center.x
+		
+		# Find the information label based on if it's on the right
+		# side of the viewport. This technique is used because the order
+		# or name of the label nodes could change.
+		if is_bottom_aligned and is_right_aligned:
+			margin.right += label.size.x + gap_size
+	
+	return margin
 	
 func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
-	var margin: Vector2 = margin_3d
+	var margin: RectOffset = margin_3d
+	var viewport_margin = get_viewport_margin()
 	
 	if camera_type == CameraType.CAMERA_2D:
 		margin = margin_2d
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
-			return Vector2.ZERO - Vector2(0, panel.size.y) - Vector2(-margin.x, margin.y)
+			return Vector2.ZERO - Vector2(0, panel.size.y) - Vector2(-margin.left, margin.bottom)
 		PinnedPosition.RIGHT:
-			return size - panel.size - margin
+			return size - panel.size - Vector2(margin.right + viewport_margin.right, margin.bottom)
 		_:
 			assert(false, "Unknown pinned position %s" % str(pinned_position))
 			
