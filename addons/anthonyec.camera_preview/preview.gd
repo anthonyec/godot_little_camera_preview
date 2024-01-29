@@ -76,15 +76,7 @@ func _process(_delta: float) -> void:
 	
 	match state:
 		InteractionState.NONE:
-			# Constrain panel size to aspect ratio.
-			panel.size.y = panel.size.x * viewport_ratio
-			
-			# Clamp size.
-			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
-				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
-			)
-			
+			panel.size = get_clamped_size(viewport_ratio)
 			panel.position = get_pinned_position(pinned_position)
 			
 		InteractionState.RESIZE:
@@ -95,16 +87,8 @@ func _process(_delta: float) -> void:
 				
 			if pinned_position == PinnedPosition.RIGHT:
 				panel.size = initial_panel_size + delta_mouse_position
-				
-			# Constrain panel size to aspect ratio.
-			panel.size.y = panel.size.x * viewport_ratio
 			
-			# Clamp size.
-			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
-				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
-			)
-			
+			panel.size = get_clamped_size(viewport_ratio)
 			panel.position = get_pinned_position(pinned_position)
 			
 		InteractionState.DRAG:
@@ -156,9 +140,7 @@ func _process(_delta: float) -> void:
 	
 	# Sync camera settings.
 	if camera_type == CameraType.CAMERA_3D and selected_camera_3d:
-		# TODO: Don't think this is needed and can just assign `panel.size` directly.
-		var viewport_size = Vector2(panel.size.x, panel.size.x * viewport_ratio)
-		sub_viewport.size = viewport_size
+		sub_viewport.size = panel.size
 		
 		preview_camera_3d.fov = selected_camera_3d.fov
 		preview_camera_3d.projection = selected_camera_3d.projection
@@ -284,6 +266,18 @@ func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
 			assert(false, "Unknown pinned position %s" % str(pinned_position))
 			
 	return Vector2.ZERO
+	
+func get_clamped_size(viewport_ratio: float) -> Vector2:
+	# Constrain panel size to aspect ratio.
+	panel.size.y = panel.size.x * viewport_ratio
+	
+	# Clamp size.
+	panel.size = panel.size.clamp(
+		Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
+		Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
+	)
+	
+	return panel.size
 
 func _on_resize_handle_button_down() -> void:
 	if state != InteractionState.NONE: return
