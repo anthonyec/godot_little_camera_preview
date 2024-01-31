@@ -26,8 +26,7 @@ enum InteractionState {
 
 const margin_3d: Vector2 = Vector2(20, 20)
 const margin_2d: Vector2 = Vector2(40, 30)
-const min_panel_width: float = 250
-const max_panel_width_ratio: float = 0.6
+const min_panel_size: float = 250
 
 @onready var panel: Panel = %Panel
 @onready var placeholder: Panel = %Placeholder
@@ -70,25 +69,22 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not visible: return
 	
-	var window_width = float(ProjectSettings.get_setting("display/window/size/viewport_width"))
-	var window_height = float(ProjectSettings.get_setting("display/window/size/viewport_height"))
-	viewport_ratio = window_height / window_width
-	
 	match state:
 		InteractionState.NONE:
-			panel.size = get_clamped_size(viewport_ratio)
+			panel.size = get_clamped_size(panel.size)
 			panel.position = get_pinned_position(pinned_position)
 			
 		InteractionState.RESIZE:
 			var delta_mouse_position = initial_mouse_position - get_global_mouse_position()
+			var resized_size = panel.size
 		
 			if pinned_position == PinnedPosition.LEFT:
-				panel.size = initial_panel_size - delta_mouse_position
+				resized_size = initial_panel_size - delta_mouse_position
 				
 			if pinned_position == PinnedPosition.RIGHT:
-				panel.size = initial_panel_size + delta_mouse_position
+				resized_size = initial_panel_size + delta_mouse_position
 			
-			panel.size = get_clamped_size(viewport_ratio)
+			panel.size = get_clamped_size(resized_size)
 			panel.position = get_pinned_position(pinned_position)
 			
 		InteractionState.DRAG:
@@ -155,7 +151,8 @@ func _process(_delta: float) -> void:
 		preview_camera_3d.environment = selected_camera_3d.environment
 	
 	if camera_type == CameraType.CAMERA_2D and selected_camera_2d:
-		var ratio = window_width / panel.size.x
+		var project_window_size = get_project_window_size()
+		var ratio = project_window_size.x / panel.size.x
 		
 		# TODO: Is there a better way to fix this?
 		# The camera border is visible sometimes due to pixel rounding. 
@@ -267,17 +264,63 @@ func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
 			
 	return Vector2.ZERO
 	
-func get_clamped_size(viewport_ratio: float) -> Vector2:
-	# Constrain panel size to aspect ratio.
-	panel.size.y = panel.size.x * viewport_ratio
-	
-	# Clamp size.
-	panel.size = panel.size.clamp(
-		Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
-		Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
+func get_clamped_size(desired_size: Vector2) -> Vector2:
+	var viewport_ratio = get_project_window_ratio()
+	var editor_viewport_size = get_editor_viewport_size()
+
+	var min_bounds = Vector2(
+		editor_viewport_size.x * 0.1,
+		editor_viewport_size.x * 0.1 * viewport_ratio
 	)
 	
-	return panel.size
+	var max_bounds = Vector2(
+		editor_viewport_size.x * 0.6,
+		editor_viewport_size.y * 0.8
+	)
+	
+	# Apply an initial clamp for the min size. The max bounds gets clamped 
+	# again later respect aspect ratio.
+	var clamped_size = desired_size.clamp(min_bounds, max_bounds)
+	
+	# Apply aspect ratio.
+	clamped_size = Vector2(clamped_size.x, clamped_size.x * viewport_ratio)
+	
+	# Clamp the max size while respecting the aspect ratio.
+	if clamped_size.y >= max_bounds.y:
+		clamped_size.x = max_bounds.y / viewport_ratio
+		clamped_size.y = max_bounds.y
+		
+	if clamped_size.x >= max_bounds.x:
+		clamped_size.x = max_bounds.x
+		clamped_size.y = max_bounds.x * viewport_ratio
+	
+	return clamped_size
+	
+func get_project_window_size() -> Vector2:
+	var window_width = float(ProjectSettings.get_setting("display/window/size/viewport_width"))
+	var window_height = float(ProjectSettings.get_setting("display/window/size/viewport_height"))
+	
+	return Vector2(window_width, window_height)
+	
+func get_project_window_ratio() -> float:
+	var project_window_size = get_project_window_size()
+	
+	return project_window_size.y / project_window_size.x
+	
+func get_editor_viewport_size() -> Vector2:
+	var fallback_size = EditorInterface.get_editor_main_screen().size
+	
+	# There isn't an API for getting the viewport node. Instead it has to be
+	# found by checking the parent's parent of the subviewport and find
+	# the correct node based on name and class.
+	var editor_sub_viewport_3d = EditorInterface.get_editor_viewport_3d(0)
+	var editor_viewport_container = editor_sub_viewport_3d.get_parent().get_parent().get_parent()
+	
+	# Early return incase editor tree structure has changed.
+	if editor_viewport_container.get_class() != "Node3DEditorViewportContainer":
+		return fallback_size
+		
+	return editor_viewport_container.size
 
 func _on_resize_handle_button_down() -> void:
 	if state != InteractionState.NONE: return
