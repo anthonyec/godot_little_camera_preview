@@ -268,19 +268,12 @@ func get_clamped_size(desired_size: Vector2) -> Vector2:
 	var viewport_ratio = get_project_window_ratio()
 	var editor_viewport_size = get_editor_viewport_size()
 
-	var min_bounds = Vector2(
-		editor_viewport_size.x * 0.1,
-		editor_viewport_size.x * 0.1 * viewport_ratio
-	)
-	
 	var max_bounds = Vector2(
 		editor_viewport_size.x * 0.6,
 		editor_viewport_size.y * 0.8
 	)
 	
-	# Apply an initial clamp for the min size. The max bounds gets clamped 
-	# again later respect aspect ratio.
-	var clamped_size = desired_size.clamp(min_bounds, max_bounds)
+	var clamped_size = desired_size
 	
 	# Apply aspect ratio.
 	clamped_size = Vector2(clamped_size.x, clamped_size.x * viewport_ratio)
@@ -293,6 +286,21 @@ func get_clamped_size(desired_size: Vector2) -> Vector2:
 	if clamped_size.x >= max_bounds.x:
 		clamped_size.x = max_bounds.x
 		clamped_size.y = max_bounds.x * viewport_ratio
+	
+	# Clamp the min size based on if it's portrait or landscape.
+	var is_portrait = viewport_ratio > 1
+	
+	# Min panel size needs to be scaled by the display scale (e.g retina) since
+	# it's a hard-coded pixel value.
+	if is_portrait and clamped_size.y <= min_panel_size * screen_scale:
+		clamped_size.x = min_panel_size / viewport_ratio
+		clamped_size.y = min_panel_size
+		clamped_size = clamped_size * screen_scale
+		
+	if not is_portrait and clamped_size.x <= min_panel_size * screen_scale:
+		clamped_size.x = min_panel_size
+		clamped_size.y = min_panel_size * viewport_ratio
+		clamped_size = clamped_size * screen_scale
 	
 	return clamped_size
 	
