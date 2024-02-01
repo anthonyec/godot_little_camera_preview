@@ -24,8 +24,8 @@ enum InteractionState {
 	ANIMATE_INTO_PLACE,
 }
 
-const margin_3d: Vector2 = Vector2(20, 20)
-const margin_2d: Vector2 = Vector2(40, 30)
+const margin_3d: Vector2 = Vector2(10, 10)
+const margin_2d: Vector2 = Vector2(20, 15)
 const min_panel_width: float = 250
 const max_panel_width_ratio: float = 0.6
 
@@ -39,6 +39,8 @@ const max_panel_width_ratio: float = 0.6
 @onready var resize_right_handle: Button = %ResizeRightHandle
 @onready var lock_button: Button = %LockButton
 @onready var gradient: TextureRect = %Gradient
+@onready var viewport_margin_container: MarginContainer = %ViewportMarginContainer
+@onready var overlay_margin_container: MarginContainer = %OverlayMarginContainer
 
 var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
@@ -66,6 +68,35 @@ func _ready() -> void:
 	# This is a known issue:
 	# https://github.com/godotengine/godot/issues/27790#issuecomment-499740220
 	sub_viewport_text_rect.texture = sub_viewport.get_texture()
+	
+	# From what I can tell there's something wrong with how an editor theme
+	# scales when used within a plugin. It seems to ignore the screen scale. 
+	# For instance, a 30x30px button will appear tiny on a retina display.
+	#
+	# Someone else had the issue with no luck:
+	# https://forum.godotengine.org/t/how-to-scale-plugin-controls-to-look-the-same-in-4k-as-1080p/36151
+	#
+	# And seems Dialogic also scales buttons manually:
+	# https://github.com/dialogic-godot/dialogic/blob/master/addons/dialogic/Editor/Common/sidebar.gd#L25C6-L38
+	#
+	# Maybe I don't know the correct way to do it, so for now the workaround is
+	# to set the correct size in code using screen scale.
+	var button_size = Vector2(30, 30) * screen_scale
+	var margin_size: float = 2 * screen_scale
+	
+	resize_left_handle.custom_minimum_size = button_size
+	resize_right_handle.custom_minimum_size = button_size
+	lock_button.custom_minimum_size = button_size
+	
+	viewport_margin_container.add_theme_constant_override("margin_left", margin_size)
+	viewport_margin_container.add_theme_constant_override("margin_top", margin_size)
+	viewport_margin_container.add_theme_constant_override("margin_right", margin_size)
+	viewport_margin_container.add_theme_constant_override("margin_bottom", margin_size)
+	
+	overlay_margin_container.add_theme_constant_override("margin_left", margin_size)
+	overlay_margin_container.add_theme_constant_override("margin_top", margin_size)
+	overlay_margin_container.add_theme_constant_override("margin_right", margin_size)
+	overlay_margin_container.add_theme_constant_override("margin_bottom", margin_size)
 
 func _process(_delta: float) -> void:
 	if not visible: return
@@ -270,10 +301,10 @@ func request_show() -> void:
 	visible = true
 	
 func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
-	var margin: Vector2 = margin_3d
+	var margin: Vector2 = margin_3d * screen_scale
 	
 	if camera_type == CameraType.CAMERA_2D:
-		margin = margin_2d
+		margin = margin_2d * screen_scale
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
