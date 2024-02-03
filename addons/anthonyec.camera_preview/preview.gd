@@ -26,6 +26,7 @@ enum InteractionState {
 
 const margin_3d: Vector2 = Vector2(10, 10)
 const margin_2d: Vector2 = Vector2(20, 15)
+const panel_margin: float = 2
 const min_panel_width: float = 250
 const max_panel_width_ratio: float = 0.6
 
@@ -45,7 +46,7 @@ const max_panel_width_ratio: float = 0.6
 var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
 var viewport_ratio: float = 1
-var screen_scale: float = 1
+var editor_scale: float = EditorInterface.get_editor_scale()
 var is_locked: bool
 var show_controls: bool
 var selected_camera_3d: Camera3D
@@ -59,7 +60,8 @@ var initial_panel_size: Vector2
 var initial_panel_position: Vector2
 
 func _ready() -> void:
-	screen_scale = DisplayServer.screen_get_scale()
+	# Set initial width.
+	panel.size.x = min_panel_width * editor_scale
 	
 	# Setting texture to viewport in code instead of directly in the editor 
 	# because otherwise an error "Path to node is invalid: Panel/SubViewport"
@@ -81,12 +83,17 @@ func _ready() -> void:
 	#
 	# Maybe I don't know the correct way to do it, so for now the workaround is
 	# to set the correct size in code using screen scale.
-	var button_size = Vector2(30, 30) * screen_scale
-	var margin_size: float = 2 * screen_scale
+	var button_size = Vector2(30, 30) * editor_scale
+	var margin_size: float = panel_margin * editor_scale
 	
-	resize_left_handle.custom_minimum_size = button_size
-	resize_right_handle.custom_minimum_size = button_size
-	lock_button.custom_minimum_size = button_size
+	resize_left_handle.size = button_size
+	resize_left_handle.pivot_offset = Vector2(0, 0) * editor_scale
+	
+	resize_right_handle.size = button_size
+	resize_right_handle.pivot_offset = Vector2(30, 30) * editor_scale
+	
+	lock_button.size = button_size
+	lock_button.pivot_offset = Vector2(0, 30) * editor_scale
 	
 	viewport_margin_container.add_theme_constant_override("margin_left", margin_size)
 	viewport_margin_container.add_theme_constant_override("margin_top", margin_size)
@@ -112,7 +119,7 @@ func _process(_delta: float) -> void:
 			
 			# Clamp size.
 			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
+				Vector2(min_panel_width * editor_scale, min_panel_width * editor_scale * viewport_ratio),
 				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
 			)
 			
@@ -132,7 +139,7 @@ func _process(_delta: float) -> void:
 			
 			# Clamp size.
 			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
+				Vector2(min_panel_width * editor_scale, min_panel_width * editor_scale * viewport_ratio),
 				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
 			)
 			
@@ -301,10 +308,10 @@ func request_show() -> void:
 	visible = true
 	
 func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
-	var margin: Vector2 = margin_3d * screen_scale
+	var margin: Vector2 = margin_3d * editor_scale
 	
 	if camera_type == CameraType.CAMERA_2D:
-		margin = margin_2d * screen_scale
+		margin = margin_2d * editor_scale
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
