@@ -24,8 +24,9 @@ enum InteractionState {
 	ANIMATE_INTO_PLACE,
 }
 
-const margin_3d: Vector2 = Vector2(20, 20)
-const margin_2d: Vector2 = Vector2(40, 30)
+const margin_3d: Vector2 = Vector2(10, 10)
+const margin_2d: Vector2 = Vector2(20, 15)
+const panel_margin: float = 2
 const min_panel_width: float = 250
 const max_panel_width_ratio: float = 0.6
 
@@ -39,11 +40,14 @@ const max_panel_width_ratio: float = 0.6
 @onready var resize_right_handle: Button = %ResizeRightHandle
 @onready var lock_button: Button = %LockButton
 @onready var gradient: TextureRect = %Gradient
+@onready var viewport_margin_container: MarginContainer = %ViewportMarginContainer
+@onready var overlay_margin_container: MarginContainer = %OverlayMarginContainer
+@onready var overlay_container: Control = %OverlayContainer
 
 var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
 var viewport_ratio: float = 1
-var screen_scale: float = 1
+var editor_scale: float = EditorInterface.get_editor_scale()
 var is_locked: bool
 var show_controls: bool
 var selected_camera_3d: Camera3D
@@ -57,7 +61,8 @@ var initial_panel_size: Vector2
 var initial_panel_position: Vector2
 
 func _ready() -> void:
-	screen_scale = DisplayServer.screen_get_scale()
+	# Set initial width.
+	panel.size.x = min_panel_width * editor_scale
 	
 	# Setting texture to viewport in code instead of directly in the editor 
 	# because otherwise an error "Path to node is invalid: Panel/SubViewport"
@@ -66,6 +71,55 @@ func _ready() -> void:
 	# This is a known issue:
 	# https://github.com/godotengine/godot/issues/27790#issuecomment-499740220
 	sub_viewport_text_rect.texture = sub_viewport.get_texture()
+	
+	# From what I can tell there's something wrong with how an editor theme
+	# scales when used within a plugin. It seems to ignore the screen scale. 
+	# For instance, a 30x30px button will appear tiny on a retina display.
+	#
+	# Someone else had the issue with no luck:
+	# https://forum.godotengine.org/t/how-to-scale-plugin-controls-to-look-the-same-in-4k-as-1080p/36151
+	#
+	# And seems Dialogic also scales buttons manually:
+	# https://github.com/dialogic-godot/dialogic/blob/master/addons/dialogic/Editor/Common/sidebar.gd#L25C6-L38
+	#
+	# Maybe I don't know the correct way to do it, so for now the workaround is
+	# to set the correct size in code using screen scale.
+	var button_size = Vector2(30, 30) * editor_scale
+	var margin_size: float = panel_margin * editor_scale
+	
+	resize_left_handle.size = button_size
+	resize_left_handle.pivot_offset = Vector2(0, 0) * editor_scale
+	
+	resize_right_handle.size = button_size
+	resize_right_handle.pivot_offset = Vector2(30, 30) * editor_scale
+	
+	lock_button.size = button_size
+	lock_button.pivot_offset = Vector2(0, 30) * editor_scale
+	
+	viewport_margin_container.add_theme_constant_override("margin_left", margin_size)
+	viewport_margin_container.add_theme_constant_override("margin_top", margin_size)
+	viewport_margin_container.add_theme_constant_override("margin_right", margin_size)
+	viewport_margin_container.add_theme_constant_override("margin_bottom", margin_size)
+	
+	overlay_margin_container.add_theme_constant_override("margin_left", margin_size)
+	overlay_margin_container.add_theme_constant_override("margin_top", margin_size)
+	overlay_margin_container.add_theme_constant_override("margin_right", margin_size)
+	overlay_margin_container.add_theme_constant_override("margin_bottom", margin_size)
+	
+	# Parent node overlay size is not available on first ready, need to wait a 
+	# frame for it to be drawn.
+	await get_tree().process_frame
+	
+	# Anchors are set in code because setting them in the editor UI doesn't take
+	# editor scale into account.
+	resize_left_handle.position = Vector2(0, 0)
+	resize_right_handle.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	
+	resize_right_handle.position = Vector2(overlay_container.size.x - button_size.x, 0)
+	resize_right_handle.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	
+	lock_button.position = Vector2(0, overlay_container.size.y - button_size.y)
+	lock_button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 
 func _process(_delta: float) -> void:
 	if not visible: return
@@ -81,7 +135,7 @@ func _process(_delta: float) -> void:
 			
 			# Clamp size.
 			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
+				Vector2(min_panel_width * editor_scale, min_panel_width * editor_scale * viewport_ratio),
 				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
 			)
 			
@@ -101,7 +155,7 @@ func _process(_delta: float) -> void:
 			
 			# Clamp size.
 			panel.size = panel.size.clamp(
-				Vector2(min_panel_width * screen_scale, min_panel_width * screen_scale * viewport_ratio),
+				Vector2(min_panel_width * editor_scale, min_panel_width * editor_scale * viewport_ratio),
 				Vector2(size.x * max_panel_width_ratio, size.x * max_panel_width_ratio * viewport_ratio)
 			)
 			
@@ -270,10 +324,10 @@ func request_show() -> void:
 	visible = true
 	
 func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
-	var margin: Vector2 = margin_3d
+	var margin: Vector2 = margin_3d * editor_scale
 	
 	if camera_type == CameraType.CAMERA_2D:
-		margin = margin_2d
+		margin = margin_2d * editor_scale
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
