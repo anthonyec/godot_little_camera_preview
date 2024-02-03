@@ -341,11 +341,11 @@ func get_clamped_size(desired_size: Vector2) -> Vector2:
 		clamped_size.x = max_bounds.x
 		clamped_size.y = max_bounds.x * viewport_ratio
 	
-	# Clamp the min size based on if it's portrait or landscape.
+	# Clamp the min size based on if it's portrait or landscape. Portrait min
+	# size should be based on it's height. Landscape min size is based on it's
+	# width instead. Applying min width to a portrait size would make it too big.
 	var is_portrait = viewport_ratio > 1
 	
-	# Min panel size needs to be scaled by the display scale (e.g retina) since
-	# it's a hard-coded pixel value.
 	if is_portrait and clamped_size.y <= min_panel_size * editor_scale:
 		clamped_size.x = min_panel_size / viewport_ratio
 		clamped_size.y = min_panel_size
