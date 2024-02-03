@@ -42,6 +42,7 @@ const max_panel_width_ratio: float = 0.6
 @onready var gradient: TextureRect = %Gradient
 @onready var viewport_margin_container: MarginContainer = %ViewportMarginContainer
 @onready var overlay_margin_container: MarginContainer = %OverlayMarginContainer
+@onready var overlay_container: Control = %OverlayContainer
 
 var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
@@ -104,6 +105,21 @@ func _ready() -> void:
 	overlay_margin_container.add_theme_constant_override("margin_top", margin_size)
 	overlay_margin_container.add_theme_constant_override("margin_right", margin_size)
 	overlay_margin_container.add_theme_constant_override("margin_bottom", margin_size)
+	
+	# Parent node overlay size is not available on first ready, need to wait a 
+	# frame for it to be drawn.
+	await get_tree().process_frame
+	
+	# Anchors are set in code because setting them in the editor UI doesn't take
+	# editor scale into account.
+	resize_left_handle.position = Vector2(0, 0)
+	resize_right_handle.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	
+	resize_right_handle.position = Vector2(overlay_container.size.x - button_size.x, 0)
+	resize_right_handle.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	
+	lock_button.position = Vector2(0, overlay_container.size.y - button_size.y)
+	lock_button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 
 func _process(_delta: float) -> void:
 	if not visible: return
