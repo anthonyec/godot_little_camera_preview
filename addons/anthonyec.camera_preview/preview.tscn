@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://btc01wc11tiid" path="res://addons/anthonyec.camera_preview/GuiResizerTopLeft.svg" id="2_t64ej"]
 [ext_resource type="Texture2D" uid="uid://04l05jxuyt7k" path="res://addons/anthonyec.camera_preview/GuiResizerTopRight.svg" id="3_6yuab"]
 
-[sub_resource type="ViewportTexture" id="ViewportTexture_j8c5h"]
+[sub_resource type="ViewportTexture" id="ViewportTexture_hchdq"]
 viewport_path = NodePath("Panel/SubViewport")
 
 [sub_resource type="Gradient" id="Gradient_11p6r"]
@@ -55,7 +55,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -520.0
-offset_top = -301.25
+offset_top = -908.889
 offset_right = -20.0
 offset_bottom = -20.0
 grow_horizontal = 0
@@ -77,6 +77,7 @@ unique_name_in_owner = true
 ignore_rotation = false
 
 [node name="ViewportMarginContainer" type="MarginContainer" parent="Panel"]
+unique_name_in_owner = true
 clip_contents = true
 layout_mode = 1
 anchors_preset = 15
@@ -93,18 +94,8 @@ theme_override_constants/margin_bottom = 4
 [node name="TextureRect" type="TextureRect" parent="Panel/ViewportMarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-texture = SubResource("ViewportTexture_j8c5h")
+texture = SubResource("ViewportTexture_hchdq")
 expand_mode = 1
-
-[node name="DragHandle" type="Button" parent="Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-focus_mode = 0
-flat = true
 
 [node name="Gradient" type="TextureRect" parent="Panel"]
 unique_name_in_owner = true
@@ -119,7 +110,7 @@ mouse_filter = 2
 texture = SubResource("GradientTexture2D_4dkve")
 
 [node name="OverlayMarginContainer" type="MarginContainer" parent="Panel"]
-clip_contents = true
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -132,33 +123,64 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="ResizeLeftHandle" type="Button" parent="Panel/OverlayMarginContainer"]
+[node name="OverlayContainer" type="Control" parent="Panel/OverlayMarginContainer"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="DragHandle" type="Button" parent="Panel/OverlayMarginContainer/OverlayContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
+flat = true
+
+[node name="ResizeLeftHandle" type="Button" parent="Panel/OverlayMarginContainer/OverlayContainer"]
 unique_name_in_owner = true
 visible = false
-layout_mode = 2
+layout_mode = 1
+offset_right = 60.0
+offset_bottom = 60.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 mouse_default_cursor_shape = 12
 icon = ExtResource("2_t64ej")
 flat = true
 icon_alignment = 1
+expand_icon = true
 
-[node name="ResizeRightHandle" type="Button" parent="Panel/OverlayMarginContainer"]
+[node name="ResizeRightHandle" type="Button" parent="Panel/OverlayMarginContainer/OverlayContainer"]
 unique_name_in_owner = true
 visible = false
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -60.0
+offset_bottom = 60.0
+pivot_offset = Vector2(60, 60)
 size_flags_horizontal = 8
 size_flags_vertical = 0
 mouse_default_cursor_shape = 11
 icon = ExtResource("3_6yuab")
 flat = true
 icon_alignment = 1
+expand_icon = true
 
-[node name="LockButton" type="Button" parent="Panel/OverlayMarginContainer"]
+[node name="LockButton" type="Button" parent="Panel/OverlayMarginContainer/OverlayContainer"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_right = 60.0
+pivot_offset = Vector2(0, 60)
 size_flags_horizontal = 0
 size_flags_vertical = 8
 tooltip_text = "Always Show Preview"
@@ -166,12 +188,13 @@ toggle_mode = true
 icon = ExtResource("2_p0pa8")
 flat = true
 icon_alignment = 1
+expand_icon = true
 
-[connection signal="button_down" from="Panel/DragHandle" to="." method="_on_drag_handle_button_down"]
-[connection signal="button_up" from="Panel/DragHandle" to="." method="_on_drag_handle_button_up"]
-[connection signal="renamed" from="Panel/DragHandle" to="." method="_on_drag_handle_renamed"]
-[connection signal="button_down" from="Panel/OverlayMarginContainer/ResizeLeftHandle" to="." method="_on_resize_handle_button_down"]
-[connection signal="button_up" from="Panel/OverlayMarginContainer/ResizeLeftHandle" to="." method="_on_resize_handle_button_up"]
-[connection signal="button_down" from="Panel/OverlayMarginContainer/ResizeRightHandle" to="." method="_on_resize_handle_button_down"]
-[connection signal="button_up" from="Panel/OverlayMarginContainer/ResizeRightHandle" to="." method="_on_resize_handle_button_up"]
-[connection signal="pressed" from="Panel/OverlayMarginContainer/LockButton" to="." method="_on_lock_button_pressed"]
+[connection signal="button_down" from="Panel/OverlayMarginContainer/OverlayContainer/DragHandle" to="." method="_on_drag_handle_button_down"]
+[connection signal="button_up" from="Panel/OverlayMarginContainer/OverlayContainer/DragHandle" to="." method="_on_drag_handle_button_up"]
+[connection signal="renamed" from="Panel/OverlayMarginContainer/OverlayContainer/DragHandle" to="." method="_on_drag_handle_renamed"]
+[connection signal="button_down" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeLeftHandle" to="." method="_on_resize_handle_button_down"]
+[connection signal="button_up" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeLeftHandle" to="." method="_on_resize_handle_button_up"]
+[connection signal="button_down" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeRightHandle" to="." method="_on_resize_handle_button_down"]
+[connection signal="button_up" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeRightHandle" to="." method="_on_resize_handle_button_up"]
+[connection signal="pressed" from="Panel/OverlayMarginContainer/OverlayContainer/LockButton" to="." method="_on_lock_button_pressed"]
