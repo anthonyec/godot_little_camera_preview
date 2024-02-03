@@ -356,7 +356,8 @@ func get_clamped_size(desired_size: Vector2) -> Vector2:
 		clamped_size.y = min_panel_size * viewport_ratio
 		clamped_size = clamped_size * editor_scale
 	
-	return clamped_size
+	# Round down to avoid sub-pixel artifacts, mainly seen around the margins.
+	return clamped_size.floor()
 	
 func get_project_window_size() -> Vector2:
 	var window_width = float(ProjectSettings.get_setting("display/window/size/viewport_width"))
