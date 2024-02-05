@@ -51,8 +51,6 @@ var is_locked: bool
 var show_controls: bool
 var selected_camera_3d: Camera3D
 var selected_camera_2d: Camera2D
-var remote_transform_3d: RemoteTransform3D
-var remote_transform_2d: RemoteTransform2D
 
 var state: InteractionState = InteractionState.NONE
 var initial_mouse_position: Vector2
@@ -192,6 +190,14 @@ func _process(_delta: float) -> void:
 	if camera_type == CameraType.CAMERA_3D and selected_camera_3d:
 		sub_viewport.size = panel.size
 		
+		# Sync position and rotation without using a `RemoteTransform` node 
+		# because if you save a camera as a scene, the remote transform node will
+		# be stored within the scene. Also it's harder to keep the remote 
+		# transform `remote_path` up-to-date with scene changes, which causes 
+		# many errors.
+		preview_camera_3d.global_position = selected_camera_3d.global_position
+		preview_camera_3d.global_rotation = selected_camera_3d.global_rotation
+		
 		preview_camera_3d.fov = selected_camera_3d.fov
 		preview_camera_3d.projection = selected_camera_3d.projection
 		preview_camera_3d.size = selected_camera_3d.size
@@ -216,6 +222,9 @@ func _process(_delta: float) -> void:
 		sub_viewport.size = panel.size
 		sub_viewport.size_2d_override = (panel.size - hide_camera_border_fix) * ratio
 		sub_viewport.size_2d_override_stretch = true
+		
+		preview_camera_2d.global_position = selected_camera_2d.global_position
+		preview_camera_2d.global_rotation = selected_camera_2d.global_rotation
 
 		preview_camera_2d.offset = selected_camera_2d.offset
 		preview_camera_2d.zoom = selected_camera_2d.zoom
@@ -245,15 +254,8 @@ func link_with_camera_3d(camera_3d: Camera3D) -> void:
 		
 	sub_viewport.disable_3d = false
 	sub_viewport.world_3d = camera_3d.get_world_3d()
-		
-	remote_transform_3d = RemoteTransform3D.new()
 	
-	remote_transform_3d.remote_path = preview_camera_3d.get_path()
-	remote_transform_3d.use_global_coordinates = true
-	
-	camera_3d.add_child(remote_transform_3d)
 	selected_camera_3d = camera_3d
-	
 	camera_type = CameraType.CAMERA_3D
 	
 func link_with_camera_2d(camera_2d: Camera2D) -> void:
@@ -273,23 +275,14 @@ func link_with_camera_2d(camera_2d: Camera2D) -> void:
 	sub_viewport.disable_3d = true
 	sub_viewport.world_2d = camera_2d.get_world_2d()
 		
-	remote_transform_2d = RemoteTransform2D.new()
-	
-	remote_transform_2d.remote_path = preview_camera_2d.get_path()
-	remote_transform_2d.use_global_coordinates = true
-	
-	camera_2d.add_child(remote_transform_2d)
 	selected_camera_2d = camera_2d
-	
 	camera_type = CameraType.CAMERA_2D
 
 func unlink_camera() -> void:
 	if selected_camera_3d:
-		selected_camera_3d.remove_child(remote_transform_3d)
 		selected_camera_3d = null
 	
 	if selected_camera_2d:
-		selected_camera_2d.remove_child(remote_transform_2d)
 		selected_camera_2d = null
 	
 	is_locked = false
