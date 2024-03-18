@@ -49,6 +49,10 @@ func _on_editor_selection_changed() -> void:
 	var selected_camera_3d: Camera3D = find_camera_3d_or_null(selected_nodes)
 	var selected_camera_2d: Camera2D = find_camera_2d_or_null(selected_nodes)
 	
+	var selected_camera_proxy_3d: Node3D = find_camera_proxy_3d_or_null(selected_nodes)
+	
+	print(selected_camera_proxy_3d)
+	
 	if selected_camera_3d and current_main_screen_name == "3D":
 		preview.link_with_camera_3d(selected_camera_3d)
 		preview.request_show()
@@ -57,6 +61,9 @@ func _on_editor_selection_changed() -> void:
 		preview.link_with_camera_2d(selected_camera_2d)
 		preview.request_show()
 		
+	elif selected_camera_proxy_3d and current_main_screen_name == "3D":
+		preview.request_show()
+
 	else:
 		preview.request_hide()
 	
@@ -82,6 +89,23 @@ func find_camera_2d_or_null(nodes: Array[Node]) -> Camera2D:
 			break
 			
 	return camera
+	
+func find_camera_proxy_3d_or_null(nodes: Array[Node]) -> Node3D:
+	var proxy: Node3D
+	
+	for node in nodes:
+		var script = node.get_script()
+		if not script: continue
+		
+		# TODO: Why not autocomplete?
+		var path = script.resource_path as String
+		
+		# TODO: Is there a way to check the class name : ( ?
+		if path.begins_with("res://addons/phantom_camera") and path.ends_with("phantom_camera_3D.gd"):
+			proxy = node
+			break
+		
+	return proxy
 
 func _on_selected_camera_3d_tree_exiting() -> void:
 	preview.unlink_camera()
