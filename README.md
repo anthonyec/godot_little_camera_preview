@@ -13,8 +13,9 @@ Install via the [Asset Library](https://godotengine.org/asset-library/asset/2500
 If you've downloaded this manually, do the following:
 
 - Ensure you're using **Godot 4.2 or above**
-- Move the folder `addons/anthonyec.camera_preview` to your project's `addons` folder
-- Enable Camera Preview in `Project Settings > Addons`
+- Find the `addons` folder in your project files, or create it if it doesn't exist yet.
+- Move the folder `addons/anthonyec.camera_preview` to your project's `addons` folder.
+- Enable Little Camera Preview under `Project > Project Settings > Plugins`
 
 ## Licence
 
