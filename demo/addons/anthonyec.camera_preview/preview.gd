@@ -283,14 +283,17 @@ func link_with_camera_2d(camera_2d: Camera2D) -> void:
 
 func redraw_ui() -> void:
 	var obj = get_main_scene(selected_camera_2d)
-	print(obj)
 	if obj:
-		var collectionfound = findByType(obj,CanvasLayer)
+		var canvasfound = findByType(obj,CanvasLayer,true)
+		var controlfound = findByType(obj,Control,true)
 		if(ui_draw.get_children()):
 			for child in ui_draw.get_children():
 				ui_draw.remove_child(child)
 				child.queue_free()
-		for child in collectionfound:
+		for child in canvasfound:
+			var newObj = child.duplicate()
+			ui_draw.add_child(newObj)
+		for child in controlfound:
 			var newObj = child.duplicate()
 			ui_draw.add_child(newObj)
 		
@@ -421,9 +424,9 @@ func _on_lock_button_pressed() -> void:
 
 
 var listOfAllNodesInTree = []
-func findByType(parent, type,all:bool = false):
+func findByType(parent, type,isParent:bool = false):
 	listOfAllNodesInTree.clear()
-	if not all:
+	if not isParent:
 		for child in parent.get_children():
 			if is_instance_of(child, type):
 				listOfAllNodesInTree.append(child)
@@ -434,7 +437,6 @@ func findByType(parent, type,all:bool = false):
 func find(parent, type):
 	for child in parent.get_children():
 		if is_instance_of(child, type):
-			print(child)
 			listOfAllNodesInTree.append(child)
 		find(child, type)
 

@@ -28,3 +28,12 @@ offset_bottom = 23.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 121
 text = "sasdfasdfsd"
+
+[node name="Label" type="Label" parent="."]
+offset_left = 438.0
+offset_top = 378.0
+offset_right = 655.0
+offset_bottom = 401.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 231
+text = "asdasdasdasdasdasdasdasd"
