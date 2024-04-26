@@ -63,3 +63,14 @@ fov = 69.4097
 [node name="Camera3D3" type="Camera3D" parent="."]
 transform = Transform3D(0.716911, 0.00464808, 0.69715, 1.1914e-10, 0.999978, -0.00666711, -0.697165, 0.00477972, 0.716895, 8.21847, 1.01507, 7.42971)
 fov = 19.3989
+
+[node name="test" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="test"]
+offset_left = 123.0
+offset_top = 40.0
+offset_right = 1220.0
+offset_bottom = 206.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 121
+text = "hello3D"

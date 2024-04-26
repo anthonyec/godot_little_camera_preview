@@ -15,7 +15,7 @@ scale = Vector2(0.124943, 0.124943)
 texture = ExtResource("2_fk71s")
 
 [node name="Camera2D2" type="Camera2D" parent="."]
-position = Vector2(280, 133)
+position = Vector2(248, 146)
 rotation = -0.268458
 ignore_rotation = false
 zoom = Vector2(2, 2)
@@ -23,17 +23,21 @@ zoom = Vector2(2, 2)
 [node name="test" type="CanvasLayer" parent="."]
 
 [node name="Label" type="Label" parent="test"]
-offset_right = 40.0
-offset_bottom = 23.0
+offset_left = 123.0
+offset_top = 40.0
+offset_right = 1220.0
+offset_bottom = 206.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 121
-text = "sasdfasdfsd"
+text = "Hello 2D"
 
-[node name="Label" type="Label" parent="."]
+[node name="Node2D" type="Node2D" parent="."]
+
+[node name="Label" type="Label" parent="Node2D"]
 offset_left = 438.0
 offset_top = 378.0
-offset_right = 655.0
-offset_bottom = 401.0
+offset_right = 3558.0
+offset_bottom = 693.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 231
-text = "asdasdasdasdasdasdasdasd"
+text = "Hello Not to render"

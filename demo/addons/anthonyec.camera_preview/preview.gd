@@ -258,6 +258,7 @@ func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	
 	selected_camera_3d = camera_3d
 	camera_type = CameraType.CAMERA_3D
+	redraw_ui(selected_camera_3d)
 	
 func link_with_camera_2d(camera_2d: Camera2D) -> void:
 	if not preview_camera_2d:
@@ -277,23 +278,20 @@ func link_with_camera_2d(camera_2d: Camera2D) -> void:
 	sub_viewport.disable_3d = true
 	sub_viewport.world_2d = camera_2d.get_world_2d()
 	selected_camera_2d = camera_2d
-	redraw_ui()
-	
 	camera_type = CameraType.CAMERA_2D
+	redraw_ui(selected_camera_2d)
 
-func redraw_ui() -> void:
-	var obj = get_main_scene(selected_camera_2d)
+func redraw_ui(cameraSelected) -> void:
+	var obj = get_main_scene(cameraSelected)
 	if obj:
-		var canvasfound = findByType(obj,CanvasLayer,true)
-		var controlfound = findByType(obj,Control,true)
 		if(ui_draw.get_children()):
 			for child in ui_draw.get_children():
 				ui_draw.remove_child(child)
 				child.queue_free()
-		for child in canvasfound:
+		for child in findByType(obj,CanvasLayer):
 			var newObj = child.duplicate()
 			ui_draw.add_child(newObj)
-		for child in controlfound:
+		for child in findByType(obj,Control):
 			var newObj = child.duplicate()
 			ui_draw.add_child(newObj)
 		
@@ -424,22 +422,12 @@ func _on_lock_button_pressed() -> void:
 
 
 var listOfAllNodesInTree = []
-func findByType(parent, type,isParent:bool = false):
+func findByType(parent, type):
 	listOfAllNodesInTree.clear()
-	if not isParent:
-		for child in parent.get_children():
-			if is_instance_of(child, type):
-				listOfAllNodesInTree.append(child)
-	else:
-		find(parent, type)
-	return listOfAllNodesInTree
-
-func find(parent, type):
 	for child in parent.get_children():
 		if is_instance_of(child, type):
 			listOfAllNodesInTree.append(child)
-		find(child, type)
-
+	return listOfAllNodesInTree
 
 func get_main_scene(obj):
 	if is_instance_of( obj ,SubViewport):
