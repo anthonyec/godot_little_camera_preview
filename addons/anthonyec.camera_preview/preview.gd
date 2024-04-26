@@ -42,6 +42,7 @@ const min_panel_size: float = 250
 @onready var viewport_margin_container: MarginContainer = %ViewportMarginContainer
 @onready var overlay_margin_container: MarginContainer = %OverlayMarginContainer
 @onready var overlay_container: Control = %OverlayContainer
+@onready var ui_draw: CanvasLayer = $Panel/SubViewport/UIDraw
 
 var camera_type: CameraType = CameraType.CAMERA_3D
 var pinned_position: PinnedPosition = PinnedPosition.RIGHT
@@ -257,27 +258,43 @@ func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	
 	selected_camera_3d = camera_3d
 	camera_type = CameraType.CAMERA_3D
+	redraw_ui(selected_camera_3d)
 	
 func link_with_camera_2d(camera_2d: Camera2D) -> void:
 	if not preview_camera_2d:
 		return request_hide()
 	
 	var is_different_camera = camera_2d != preview_camera_2d
-	
 	# TODO: A bit messy.
 	if is_different_camera:
+
 		if preview_camera_2d.tree_exiting.is_connected(unlink_camera):
 			preview_camera_2d.tree_exiting.disconnect(unlink_camera)
 		
 		if not camera_2d.tree_exiting.is_connected(unlink_camera):
 			camera_2d.tree_exiting.connect(unlink_camera)
+			
 		
 	sub_viewport.disable_3d = true
 	sub_viewport.world_2d = camera_2d.get_world_2d()
-		
 	selected_camera_2d = camera_2d
 	camera_type = CameraType.CAMERA_2D
+	redraw_ui(selected_camera_2d)
 
+func redraw_ui(cameraSelected) -> void:
+	var obj = get_main_scene(cameraSelected)
+	if obj:
+		if(ui_draw.get_children()):
+			for child in ui_draw.get_children():
+				ui_draw.remove_child(child)
+				child.queue_free()
+		for child in findByType(obj,CanvasLayer):
+			var newObj = child.duplicate()
+			ui_draw.add_child(newObj)
+		for child in findByType(obj,Control):
+			var newObj = child.duplicate()
+			ui_draw.add_child(newObj)
+		
 func unlink_camera() -> void:
 	if selected_camera_3d:
 		selected_camera_3d = null
@@ -402,3 +419,20 @@ func _on_drag_handle_button_up() -> void:
 
 func _on_lock_button_pressed() -> void:
 	is_locked = !is_locked
+
+
+var listOfAllNodesInTree = []
+func findByType(parent, type):
+	listOfAllNodesInTree.clear()
+	for child in parent.get_children():
+		if is_instance_of(child, type):
+			listOfAllNodesInTree.append(child)
+	return listOfAllNodesInTree
+
+func get_main_scene(obj):
+	if is_instance_of( obj ,SubViewport):
+		return null
+	if is_instance_of(obj.get_parent(),SubViewport):
+		return obj
+	else:
+		return get_main_scene(obj.get_parent())

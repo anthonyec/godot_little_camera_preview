@@ -15,7 +15,7 @@ scale = Vector2(0.124943, 0.124943)
 texture = ExtResource("2_fk71s")
 
 [node name="Camera2D2" type="Camera2D" parent="."]
-position = Vector2(248, 146)
+position = Vector2(119, 166)
 rotation = -0.268458
 ignore_rotation = false
 zoom = Vector2(2, 2)
