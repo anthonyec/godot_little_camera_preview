@@ -210,6 +210,7 @@ func _process(_delta: float) -> void:
 		preview_camera_3d.v_offset = selected_camera_3d.v_offset
 		preview_camera_3d.attributes = selected_camera_3d.attributes
 		preview_camera_3d.environment = selected_camera_3d.environment
+		redraw_ui(selected_camera_3d)
 	
 	if camera_type == CameraType.CAMERA_2D and selected_camera_2d:
 		var project_window_size = get_project_window_size()
@@ -235,6 +236,7 @@ func _process(_delta: float) -> void:
 		preview_camera_2d.limit_right = selected_camera_2d.limit_right
 		preview_camera_2d.limit_top = selected_camera_2d.limit_top
 		preview_camera_2d.limit_bottom = selected_camera_2d.limit_bottom
+		redraw_ui(selected_camera_2d)
 
 func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	# TODO: Camera may not be ready since this method is called in `_enter_tree` 
