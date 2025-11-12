@@ -11,7 +11,11 @@ config_version=5
 [application]
 
 config/name="Little Camera Preview Demo"
-config/features=PackedStringArray("4.2", "GL Compatibility")
+config/features=PackedStringArray("4.5", "GL Compatibility")
+
+[debug]
+
+gdscript/warnings/untyped_declaration=2
 
 [editor_plugins]
 

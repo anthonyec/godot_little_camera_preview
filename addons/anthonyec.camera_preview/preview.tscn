@@ -1,12 +1,11 @@
 [gd_scene load_steps=8 format=3 uid="uid://xybmfvufjuv"]
 
-[ext_resource type="Script" path="res://addons/anthonyec.camera_preview/preview.gd" id="1_6b32r"]
+[ext_resource type="Script" uid="uid://56ntugxskwub" path="res://addons/anthonyec.camera_preview/preview.gd" id="1_6b32r"]
 [ext_resource type="Texture2D" uid="uid://do6d60od41vmg" path="res://addons/anthonyec.camera_preview/Pin.svg" id="2_p0pa8"]
 [ext_resource type="Texture2D" uid="uid://btc01wc11tiid" path="res://addons/anthonyec.camera_preview/GuiResizerTopLeft.svg" id="2_t64ej"]
 [ext_resource type="Texture2D" uid="uid://04l05jxuyt7k" path="res://addons/anthonyec.camera_preview/GuiResizerTopRight.svg" id="3_6yuab"]
 
-[sub_resource type="ViewportTexture" id="ViewportTexture_hchdq"]
-viewport_path = NodePath("Panel/SubViewport")
+[sub_resource type="ViewportTexture" id="ViewportTexture_m22c1"]
 
 [sub_resource type="Gradient" id="Gradient_11p6r"]
 offsets = PackedFloat32Array(0, 0.3, 0.6, 1)
@@ -55,7 +54,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -520.0
-offset_top = -908.889
+offset_top = -301.0
 offset_right = -20.0
 offset_bottom = -20.0
 grow_horizontal = 0
@@ -94,7 +93,7 @@ theme_override_constants/margin_bottom = 4
 [node name="TextureRect" type="TextureRect" parent="Panel/ViewportMarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-texture = SubResource("ViewportTexture_hchdq")
+texture = SubResource("ViewportTexture_m22c1")
 expand_mode = 1
 
 [node name="Gradient" type="TextureRect" parent="Panel"]
@@ -162,6 +161,7 @@ anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -60.0
 offset_bottom = 60.0
+grow_horizontal = 0
 pivot_offset = Vector2(60, 60)
 size_flags_horizontal = 8
 size_flags_vertical = 0
@@ -180,6 +180,7 @@ anchor_top = 1.0
 anchor_bottom = 1.0
 offset_top = -60.0
 offset_right = 60.0
+grow_vertical = 0
 pivot_offset = Vector2(0, 60)
 size_flags_horizontal = 0
 size_flags_vertical = 8
