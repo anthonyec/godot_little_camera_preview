@@ -14,7 +14,7 @@ func _enter_tree() -> void:
 	preview = preview_scene.instantiate() as CameraPreview
 	preview.request_hide()
 	
-	var main_screen = EditorInterface.get_editor_main_screen()
+	var main_screen: Control = EditorInterface.get_editor_main_screen() as Control
 	main_screen.add_child(preview)
 	
 func _exit_tree() -> void:
@@ -44,7 +44,7 @@ func _on_editor_selection_changed() -> void:
 		
 	preview.visible = true
 	
-	var selected_nodes = EditorInterface.get_selection().get_selected_nodes()
+	var selected_nodes: Array[Node] = EditorInterface.get_selection().get_selected_nodes()
 	
 	var selected_camera_3d: Camera3D = find_camera_3d_or_null(selected_nodes)
 	var selected_camera_2d: Camera2D = find_camera_2d_or_null(selected_nodes)
