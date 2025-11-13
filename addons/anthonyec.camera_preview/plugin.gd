@@ -46,42 +46,52 @@ func _on_editor_selection_changed() -> void:
 	
 	var selected_nodes: Array[Node] = EditorInterface.get_selection().get_selected_nodes()
 	
-	var selected_camera_3d: Camera3D = find_camera_3d_or_null(selected_nodes)
-	var selected_camera_2d: Camera2D = find_camera_2d_or_null(selected_nodes)
-	
-	if selected_camera_3d and current_main_screen_name == "3D":
-		preview.link_with_camera_3d(selected_camera_3d)
-		preview.request_show()
-	
-	elif selected_camera_2d and current_main_screen_name == "2D":
-		preview.link_with_camera_2d(selected_camera_2d)
-		preview.request_show()
-		
-	else:
+	if selected_nodes.is_empty():
 		preview.request_hide()
+		return
+		
+	var camera_3d: Camera3D
+	var camera_2d: Camera2D
+	
+	if current_main_screen_name == "3D":
+		for node in selected_nodes:
+			camera_3d = find_camera_3d(node)
+			if camera_3d:
+				preview.link_with_camera_3d(camera_3d)
+				preview.request_show()
+				return
+	elif current_main_screen_name == "2D":	
+		for node in selected_nodes:
+			camera_2d = find_camera_2d(node)
+			if camera_2d:
+				preview.link_with_camera_2d(camera_2d)
+				preview.request_show()
+				return
+	
+	preview.request_hide()
 	
 func is_main_screen_viewport() -> bool:
 	return current_main_screen_name == "3D" or current_main_screen_name == "2D"
 	
-func find_camera_3d_or_null(nodes: Array[Node]) -> Camera3D:
-	var camera: Camera3D
+func find_camera_3d(node: Node) -> Camera3D:
+	if node is Camera3D:
+		return node as Camera3D
+		
+	var children = node.find_children("*", "Camera3D")
+	if not children.is_empty():
+		return children[0] as Camera3D
+		
+	return null
 	
-	for node in nodes:
-		if node is Camera3D:
-			camera = node as Camera3D
-			break
-			
-	return camera
-	
-func find_camera_2d_or_null(nodes: Array[Node]) -> Camera2D:
-	var camera: Camera2D
-	
-	for node in nodes:
-		if node is Camera2D:
-			camera = node as Camera2D
-			break
-			
-	return camera
+func find_camera_2d(node: Node) -> Camera2D:
+	if node is Camera2D:
+		return node as Camera2D
+		
+	var children = node.find_children("*", "Camera2D")
+	if not children.is_empty():
+		return children[0] as Camera2D
+		
+	return null
 
 func _on_selected_camera_3d_tree_exiting() -> void:
 	preview.unlink_camera()
