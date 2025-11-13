@@ -233,6 +233,13 @@ func _process(_delta: float) -> void:
 		preview_camera_2d.limit_right = _selected_camera_2d.limit_right
 		preview_camera_2d.limit_top = _selected_camera_2d.limit_top
 		preview_camera_2d.limit_bottom = _selected_camera_2d.limit_bottom
+		
+func _input(event: InputEvent) -> void:
+	var mouse_button_event: InputEventMouseButton = event as InputEventMouseButton
+	if not mouse_button_event: return
+	
+	if mouse_button_event.is_released() and mouse_button_event.button_index == MOUSE_BUTTON_LEFT:
+		_on_mouse_button_up()
 
 func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	# TODO: Camera may not be ready since this method is called in `_enter_tree` 
@@ -387,7 +394,9 @@ func _on_resize_handle_button_down() -> void:
 	_initial_mouse_position = get_global_mouse_position()
 	_initial_panel_size = panel.size
 
-func _on_resize_handle_button_up() -> void:
+func _on_mouse_button_up() -> void:
+	if _state != InteractionState.RESIZE: return
+	
 	_state = InteractionState.NONE
 
 func _on_drag_handle_button_down() -> void:
