@@ -196,7 +196,5 @@ expand_icon = true
 [connection signal="button_up" from="Panel/OverlayMarginContainer/OverlayContainer/DragHandle" to="." method="_on_drag_handle_button_up"]
 [connection signal="renamed" from="Panel/OverlayMarginContainer/OverlayContainer/DragHandle" to="." method="_on_drag_handle_renamed"]
 [connection signal="button_down" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeLeftHandle" to="." method="_on_resize_handle_button_down"]
-[connection signal="button_up" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeLeftHandle" to="." method="_on_resize_handle_button_up"]
 [connection signal="button_down" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeRightHandle" to="." method="_on_resize_handle_button_down"]
-[connection signal="button_up" from="Panel/OverlayMarginContainer/OverlayContainer/ResizeRightHandle" to="." method="_on_resize_handle_button_up"]
 [connection signal="pressed" from="Panel/OverlayMarginContainer/OverlayContainer/LockButton" to="." method="_on_lock_button_pressed"]
