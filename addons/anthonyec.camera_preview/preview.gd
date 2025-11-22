@@ -194,8 +194,21 @@ func _process(_delta: float) -> void:
 		# be stored within the scene. Also it's harder to keep the remote 
 		# transform `remote_path` up-to-date with scene changes, which causes 
 		# many errors.
-		preview_camera_3d.global_position = _selected_camera_3d.global_position
-		preview_camera_3d.global_rotation = _selected_camera_3d.global_rotation
+		
+		var camera_position = _selected_camera_3d.global_position
+		var camera_rotation = _selected_camera_3d.global_rotation
+		
+		# Check if the camera is child of a SpringArm3D.
+		var parent = selected_camera_3d.get_parent()
+		if parent is SpringArm3D:
+			# Extend the position by the spring length along the arm's local Z axis.
+			var spring_arm = parent as SpringArm3D
+			var local_offset = Vector3(0, 0, spring_arm.spring_length)
+			var global_offset = spring_arm.global_transform.basis * local_offset
+			camera_position = spring_arm.global_position + global_offset
+		
+		preview_camera_3d.global_position = camera_position
+		preview_camera_3d.global_rotation = camera_rotation
 		
 		preview_camera_3d.fov = _selected_camera_3d.fov
 		preview_camera_3d.projection = _selected_camera_3d.projection
