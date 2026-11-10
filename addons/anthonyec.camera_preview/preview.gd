@@ -302,9 +302,11 @@ func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
-			return Vector2.ZERO - Vector2(0, panel.size.y) - Vector2(-margin.x, margin.y)
+			return Vector2(0, size.y) - Vector2(0, panel.size.y) - Vector2(-margin.x, margin.y)
+			
 		PinnedPosition.RIGHT:
 			return size - panel.size - margin
+			
 		_:
 			assert(false, "Unknown pinned position %s" % str(pinned_position))
 			
@@ -312,13 +314,7 @@ func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
 	
 func get_clamped_size(desired_size: Vector2) -> Vector2:
 	var viewport_ratio: float = get_project_window_ratio()
-	var editor_viewport_size: Vector2 = get_editor_viewport_size()
-
-	var max_bounds: Vector2 = Vector2(
-		editor_viewport_size.x * 0.6,
-		editor_viewport_size.y * 0.8
-	)
-	
+	var max_bounds: Vector2 = Vector2(size.x * 0.6, size.y * 0.8)
 	var clamped_size: Vector2 = desired_size
 	
 	# Apply aspect ratio.
@@ -361,24 +357,6 @@ func get_project_window_ratio() -> float:
 	var project_window_size: Vector2 = get_project_window_size()
 	
 	return project_window_size.y / project_window_size.x
-	
-func get_editor_viewport_size() -> Vector2:
-	var fallback_size: Vector2 = EditorInterface.get_editor_main_screen().size
-	
-	# There isn't an API for getting the viewport node. Instead it has to be
-	# found by checking the parent's parent of the subviewport and find
-	# the correct node based on name and class.
-	var editor_sub_viewport_3d: SubViewport = EditorInterface.get_editor_viewport_3d(0)
-	var editor_viewport_container: Control = editor_sub_viewport_3d.get_parent().get_parent().get_parent() as Control
-	
-	# Early return in case editor tree structure has changed.
-	if not editor_viewport_container:
-		return fallback_size
-	
-	if editor_viewport_container.get_class() != "Node3DEditorViewportContainer":
-		return fallback_size
-		
-	return editor_viewport_container.size
 
 func _on_resize_handle_button_down() -> void:
 	if _state != InteractionState.NONE: return

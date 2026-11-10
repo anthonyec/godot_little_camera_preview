@@ -7,26 +7,34 @@ var preview: CameraPreview
 var current_main_screen_name: String
 
 func _enter_tree() -> void:
-	main_screen_changed.connect(_on_main_screen_changed)
-	EditorInterface.get_selection().selection_changed.connect(_on_editor_selection_changed)
+	# TODO: Check for docked windows changed here too.
+	# main_screen_changed.connect(_on_main_screen_changed)
+	# EditorInterface.get_selection().selection_changed.connect(_on_editor_selection_changed)
+	
+	# var main_screen: Control = EditorInterface.get_editor_main_screen() as Control
+	# main_screen.add_child(preview)
 	
 	# Initialise preview panel and add to main screen.
 	preview = preview_scene.instantiate() as CameraPreview
 	preview.request_hide()
 	
-	var main_screen: Control = EditorInterface.get_editor_main_screen() as Control
-	main_screen.add_child(preview)
+	var viewport_3d: SubViewport = EditorInterface.get_editor_viewport_3d(0)
+	var viewport_3d_container: Control = find_parent_class_name_or_null(viewport_3d, "Node3DEditorViewportContainer")	
+	viewport_3d_container.add_child(preview)
+	
+	preview.visible = true
 	
 func _exit_tree() -> void:
 	if preview:
 		preview.queue_free()
 		
 func _ready() -> void:
+	pass
 	# TODO: Currently there is no API to get the main screen name without 
 	# listening to the `EditorPlugin.main_screen_changed` signal:
 	# https://github.com/godotengine/godot-proposals/issues/2081
-	EditorInterface.set_main_screen_editor("Script")
-	EditorInterface.set_main_screen_editor("3D")
+	# EditorInterface.set_main_screen_editor("Script")
+	# EditorInterface.set_main_screen_editor("3D")
 	
 func _on_main_screen_changed(screen_name: String) -> void:
 	current_main_screen_name = screen_name
@@ -59,6 +67,9 @@ func _on_editor_selection_changed() -> void:
 		
 	else:
 		preview.request_hide()
+
+func _on_selected_camera_3d_tree_exiting() -> void:
+	preview.unlink_camera()
 	
 func is_main_screen_viewport() -> bool:
 	return current_main_screen_name == "3D" or current_main_screen_name == "2D"
@@ -83,5 +94,13 @@ func find_camera_2d_or_null(nodes: Array[Node]) -> Camera2D:
 			
 	return camera
 
-func _on_selected_camera_3d_tree_exiting() -> void:
-	preview.unlink_camera()
+func find_parent_class_name_or_null(node: Node, name: String) -> Node:
+	var current: Node = EditorInterface.get_editor_viewport_3d(0)
+	
+	while current != null:
+		current = current.get_parent()
+		
+		if current.get_class() == name:
+			return current
+			
+	return null
