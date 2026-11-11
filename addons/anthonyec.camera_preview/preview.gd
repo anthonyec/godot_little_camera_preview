@@ -125,6 +125,9 @@ func _process(_delta: float) -> void:
 			panel.size = get_clamped_size(panel.size)
 			panel.position = get_pinned_position(_pinned_position)
 			
+			# Ensure viewport UI can be interacted with.
+			mouse_filter = Control.MOUSE_FILTER_IGNORE
+			
 		InteractionState.RESIZE:
 			var delta_mouse_position: Vector2 = _initial_mouse_position - get_global_mouse_position()
 			var resized_size: Vector2 = panel.size
@@ -137,6 +140,11 @@ func _process(_delta: float) -> void:
 			
 			panel.size = get_clamped_size(resized_size)
 			panel.position = get_pinned_position(_pinned_position)
+			
+			# Block mouse events from reaching the viewport so resizing isn't
+			# interrupted if the cursor leaves the handle. It also prevents underlying
+			# UI from highlighting.
+			mouse_filter = Control.MOUSE_FILTER_STOP
 			
 		InteractionState.DRAG:
 			placeholder.size = panel.size
