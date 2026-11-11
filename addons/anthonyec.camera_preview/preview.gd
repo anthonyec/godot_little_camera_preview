@@ -143,8 +143,9 @@ func _process(_delta: float) -> void:
 			
 			var global_mouse_position: Vector2 = get_global_mouse_position()
 			var offset: Vector2 = _initial_mouse_position - _initial_panel_position
-
+			
 			panel.global_position = global_mouse_position - offset
+			panel.position = panel.position.clamp(Vector2.ZERO, size - panel.size)
 
 			if global_mouse_position.x < global_position.x + size.x / 2:
 				_pinned_position = PinnedPosition.LEFT
