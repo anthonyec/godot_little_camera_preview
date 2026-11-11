@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://bngl1nwkr7fdv"]
 
+[ext_resource type="Texture2D" uid="uid://lsylam0o1pmd" path="res://addons/kenney_prototype_textures/light/texture_07.png" id="1_lvnyt"]
 [ext_resource type="Texture2D" uid="uid://bqimw5xofyi2h" path="res://addons/kenney_prototype_textures/orange/texture_02.png" id="2_s43xh"]
 
 [sub_resource type="Environment" id="Environment_5ie3n"]
@@ -14,6 +15,12 @@ fog_enabled = true
 fog_light_color = Color(0.27451, 0.305882, 0.376471, 1)
 fog_density = 0.05
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ulw7"]
+albedo_color = Color(0.364706, 0.376471, 0.419608, 1)
+albedo_texture = ExtResource("1_lvnyt")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2n0dr"]
 albedo_texture = ExtResource("2_s43xh")
 
@@ -26,6 +33,11 @@ environment = SubResource("Environment_5ie3n")
 transform = Transform3D(0.85888, -0.202978, 0.470239, -0.281572, 0.579803, 0.764556, -0.427834, -0.789068, 0.440828, 0, 10.7901, 0)
 light_energy = 1.5
 shadow_enabled = true
+
+[node name="Floor" type="CSGBox3D" parent="." unique_id=1286444058]
+transform = Transform3D(0.999999, 0.0013115, 0.000753232, -0.00131088, 0.999999, -0.000799355, -0.000754299, 0.000798348, 0.999999, 0, 0, 0)
+size = Vector3(150, 0.1, 150)
+material = SubResource("StandardMaterial3D_0ulw7")
 
 [node name="Box" type="CSGBox3D" parent="." unique_id=416409359]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.510167, 0.562209, -0.476599)
