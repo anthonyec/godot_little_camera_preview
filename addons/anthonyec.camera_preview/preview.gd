@@ -56,7 +56,7 @@ var _initial_mouse_position: Vector2
 var _initial_panel_size: Vector2
 var _initial_panel_position: Vector2
 
-func _ready() -> void:
+func _ready() -> void:	
 	# Set initial width.
 	panel.size.x = min_panel_size * _editor_scale
 	
