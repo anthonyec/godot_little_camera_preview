@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-const preview_scene = preload("res://addons/anthonyec.camera_preview/preview.tscn")
+const preview_scene = preload("./preview.tscn")
 
 var preview_2d: CameraPreview
 var preview_3d: CameraPreview
