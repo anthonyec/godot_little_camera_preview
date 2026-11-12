@@ -28,6 +28,7 @@ func _enter_tree() -> void:
 	
 	# Setup signals.
 	EditorInterface.get_selection().selection_changed.connect(_on_editor_selection_changed)
+	_on_editor_selection_changed()
 
 func _exit_tree() -> void:
 	if preview_3d:
