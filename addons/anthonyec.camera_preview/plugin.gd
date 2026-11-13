@@ -1,18 +1,16 @@
 @tool
 extends EditorPlugin
 
-const preview_scene = preload("./preview.tscn")
-
 var preview_2d: CameraPreview
 var preview_3d: CameraPreview
 
 func _enter_tree() -> void:
 	# Initialise preview for 2D and 3D editor and make it start invisible before
 	# it is added so it does not flash visible for one frame.
-	preview_3d = preview_scene.instantiate() as CameraPreview
+	preview_3d = CameraPreview.new()
 	preview_3d.request_hide()
 	
-	preview_2d = preview_scene.instantiate() as CameraPreview
+	preview_2d = CameraPreview.new()
 	preview_2d.request_hide()
 
 	# Add previews to their respective subviewport containers. They are added to
