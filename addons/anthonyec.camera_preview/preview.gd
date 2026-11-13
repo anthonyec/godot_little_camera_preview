@@ -41,6 +41,7 @@ var _proxy_camera_3d: Camera3D
 var _proxy_camera_2d: Camera2D
 var _viewport_margin_container: MarginContainer
 var _viewport_texture_rect: TextureRect
+var _viewport_texture: ViewportTexture
 var _gradient_texture_rect: TextureRect
 var _overlay_margin_container: MarginContainer
 var _overlay_container: Control
@@ -59,8 +60,8 @@ var _selected_camera_2d: Camera2D
 
 var _state: InteractionState = InteractionState.NONE
 var _initial_mouse_position: Vector2
-var _initial_panel_size: Vector2
-var _initial_panel_position: Vector2
+var _initial_preview_panel_size: Vector2
+var _initial_preview_panel_position: Vector2
 
 func _ready() -> void:
 	_build_ui()	
@@ -81,10 +82,10 @@ func _process(_delta: float) -> void:
 			var resized_size: Vector2 = _preview_panel.size
 		
 			if _pinned_position == PinnedPosition.LEFT:
-				resized_size = _initial_panel_size - delta_mouse_position
+				resized_size = _initial_preview_panel_size - delta_mouse_position
 				
 			if _pinned_position == PinnedPosition.RIGHT:
-				resized_size = _initial_panel_size + delta_mouse_position
+				resized_size = _initial_preview_panel_size + delta_mouse_position
 			
 			_preview_panel.size = get_clamped_size(resized_size)
 			_preview_panel.position = get_pinned_position(_pinned_position)
@@ -98,7 +99,7 @@ func _process(_delta: float) -> void:
 			_preview_placeholder.size = _preview_panel.size
 			
 			var global_mouse_position: Vector2 = get_global_mouse_position()
-			var offset: Vector2 = _initial_mouse_position - _initial_panel_position
+			var offset: Vector2 = _initial_mouse_position - _initial_preview_panel_position
 			
 			_preview_panel.global_position = global_mouse_position - offset
 			_preview_panel.position = _preview_panel.position.clamp(Vector2.ZERO, size - _preview_panel.size)
@@ -128,12 +129,12 @@ func _process(_delta: float) -> void:
 	# I couldn't get `mouse_entered` and `mouse_exited` events to work 
 	# nicely, so I use rect method instead. Plus using this method it's easy to
 	# grow the hit area size.
-	var panel_hover_rect: Rect2 = Rect2(_preview_panel.global_position, _preview_panel.size)
-	panel_hover_rect = panel_hover_rect.grow(40)
+	var preview_panel_hover_rect: Rect2 = Rect2(_preview_panel.global_position, _preview_panel.size)
+	preview_panel_hover_rect = preview_panel_hover_rect.grow(40)
 	
 	var mouse_position: Vector2 = get_global_mouse_position()
 	
-	_show_controls = _state != InteractionState.NONE or panel_hover_rect.has_point(mouse_position)
+	_show_controls = _state != InteractionState.NONE or preview_panel_hover_rect.has_point(mouse_position)
 	
 	# UI visibility.
 	_resize_left_handle.visible = _show_controls and _pinned_position == PinnedPosition.RIGHT
@@ -151,8 +152,8 @@ func _process(_delta: float) -> void:
 		# be stored within the scene. Also it's harder to keep the remote 
 		# transform `remote_path` up-to-date with scene changes, which causes 
 		# many errors.
-		# _proxy_camera_3d.global_position = _selected_camera_3d.global_position
-		# _proxy_camera_3d.global_rotation = _selected_camera_3d.global_rotation
+		_proxy_camera_3d.global_position = _selected_camera_3d.global_position
+		_proxy_camera_3d.global_rotation = _selected_camera_3d.global_rotation
 		
 		_proxy_camera_3d.fov = _selected_camera_3d.fov
 		_proxy_camera_3d.projection = _selected_camera_3d.projection
@@ -205,12 +206,6 @@ func _build_ui() -> void:
 	preview_panel.clip_contents = true
 	_preview_panel = preview_panel
 	
-	var sub_viewport: SubViewport = SubViewport.new()
-	sub_viewport.size_2d_override_stretch = true
-	sub_viewport.handle_input_locally = false
-	sub_viewport.gui_disable_input = true
-	_sub_viewport = sub_viewport
-	
 	var proxy_camera_3d: Camera3D = Camera3D.new()
 	_proxy_camera_3d = proxy_camera_3d
 	
@@ -227,11 +222,17 @@ func _build_ui() -> void:
 	viewport_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_PANEL_MARGIN * _editor_scale)
 	_viewport_margin_container = viewport_margin_container
 	
+	var sub_viewport: SubViewport = SubViewport.new()
+	sub_viewport.size_2d_override_stretch = true
+	sub_viewport.handle_input_locally = false
+	sub_viewport.gui_disable_input = true
+	_sub_viewport = sub_viewport
+	
 	var viewport_texture: ViewportTexture = ViewportTexture.new()
-	# viewport_texture.viewport_path = sub_viewport.get_path()
+	_viewport_texture = viewport_texture
 	
 	var viewport_texture_rect: TextureRect = TextureRect.new()
-	# viewport_texture_rect.texture = viewport_texture
+	viewport_texture_rect.texture = viewport_texture
 	viewport_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_viewport_texture_rect = viewport_texture_rect
 	
@@ -317,36 +318,38 @@ func _build_ui() -> void:
 		[preview_panel, [
 			[sub_viewport, [
 				proxy_camera_3d,
+				# TODO: Disable 2D camera when not in use since it causes redraws by
+				# just existing in the tree.
 				proxy_camera_2d
 			]],
-			[
-				[viewport_margin_container, [
-					viewport_texture_rect
-				]],
-				gradient_texture_rect,
-				[overlay_margin_container, [
-					[overlay_container, [
-						drag_handle,
-						resize_left_handle,
-						resize_right_handle,
-						lock_button
-					]]
+			[viewport_margin_container, [
+				viewport_texture_rect
+			]],
+			gradient_texture_rect,
+			[overlay_margin_container, [
+				[overlay_container, [
+					drag_handle,
+					resize_left_handle,
+					resize_right_handle,
+					lock_button
 				]]
-			]
+			]]
 		]]
 	])
 	
-func add_children(root: Control, tree: Array) -> void:
+	_viewport_texture.viewport_path = _sub_viewport.get_path()
+	
+func add_children(root: Node, tree: Array) -> void:
 	for item: Variant in tree:
 		# It's a standard leaf node.
-		if item is Control:
+		if item is Node:
 			root.add_child(item)
 			
 		elif item is Array:
 			# If it's exactly [Parent, [Children]].
-			if item.size() == 2 and item[0] is Control and item[1] is Array:
+			if item.size() == 2 and item[0] is Node and item[1] is Array:
 				root.add_child(item[0])
-				add_children(item[0] as Control, item[1] as Array)
+				add_children(item[0] as Node, item[1] as Array)
 				
 			else:
 				add_children(root, item as Array)
@@ -480,7 +483,7 @@ func _on_resize_handle_button_down() -> void:
 	
 	_state = InteractionState.RESIZE
 	_initial_mouse_position = get_global_mouse_position()
-	_initial_panel_size = _preview_panel.size
+	_initial_preview_panel_size = _preview_panel.size
 
 func _on_resize_handle_button_up() -> void:
 	_state = InteractionState.NONE
@@ -490,7 +493,7 @@ func _on_drag_handle_button_down() -> void:
 		
 	_state = InteractionState.DRAG
 	_initial_mouse_position = get_global_mouse_position()
-	_initial_panel_position = _preview_panel.global_position
+	_initial_preview_panel_position = _preview_panel.global_position
 
 func _on_drag_handle_button_up() -> void:
 	if _state != InteractionState.DRAG: return
