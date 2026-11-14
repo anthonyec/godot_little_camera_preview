@@ -260,6 +260,7 @@ func _build_ui() -> void:
 	gradient_texture.fill_to = Vector2(0, 1)
 	
 	var gradient_texture_rect: TextureRect = TextureRect.new()
+	gradient_texture_rect.texture = gradient_texture
 	gradient_texture_rect.set_anchors_preset(PRESET_FULL_RECT)
 	_gradient_texture_rect = gradient_texture_rect
 	
