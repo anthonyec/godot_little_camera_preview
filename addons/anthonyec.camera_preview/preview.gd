@@ -196,45 +196,37 @@ func _build_ui() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT, PRESET_MODE_KEEP_SIZE, 0)
 	z_index = 999
 	
-	var preview_placeholder: Panel = Panel.new()
-	preview_placeholder.modulate = Color(1.0, 1.0, 1.0, 0.7)
-	_preview_placeholder = preview_placeholder
+	_preview_placeholder = Panel.new()
+	_preview_placeholder.modulate = Color(1.0, 1.0, 1.0, 0.7)
 	
-	var preview_panel: Panel = Panel.new()
+	_preview_panel = Panel.new()
 	# Set initial width.
-	preview_panel.size.x = MIN_PREVIEW_PANEL_SIZE * _editor_scale
-	preview_panel.clip_contents = true
-	_preview_panel = preview_panel
+	_preview_panel.size.x = MIN_PREVIEW_PANEL_SIZE * _editor_scale
+	_preview_panel.clip_contents = true
 	
-	var proxy_camera_3d: Camera3D = Camera3D.new()
-	_proxy_camera_3d = proxy_camera_3d
+	_proxy_camera_3d = Camera3D.new()
 	
-	var proxy_camera_2d: Camera2D = Camera2D.new()
-	proxy_camera_2d.ignore_rotation = false
-	_proxy_camera_2d = proxy_camera_2d
+	_proxy_camera_2d = Camera2D.new()
+	_proxy_camera_2d.ignore_rotation = false
 	
-	var viewport_margin_container: MarginContainer = MarginContainer.new()
-	viewport_margin_container.clip_contents = true
-	viewport_margin_container.set_anchors_preset(PRESET_FULL_RECT)
-	viewport_margin_container.add_theme_constant_override("margin_left", PREVIEW_PANEL_MARGIN * _editor_scale)
-	viewport_margin_container.add_theme_constant_override("margin_top", PREVIEW_PANEL_MARGIN * _editor_scale)
-	viewport_margin_container.add_theme_constant_override("margin_right", PREVIEW_PANEL_MARGIN * _editor_scale)
-	viewport_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_PANEL_MARGIN * _editor_scale)
-	_viewport_margin_container = viewport_margin_container
+	_viewport_margin_container = MarginContainer.new()
+	_viewport_margin_container.clip_contents = true
+	_viewport_margin_container.set_anchors_preset(PRESET_FULL_RECT)
+	_viewport_margin_container.add_theme_constant_override("margin_left", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_viewport_margin_container.add_theme_constant_override("margin_top", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_viewport_margin_container.add_theme_constant_override("margin_right", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_viewport_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_PANEL_MARGIN * _editor_scale)
 	
-	var sub_viewport: SubViewport = SubViewport.new()
-	sub_viewport.size_2d_override_stretch = true
-	sub_viewport.handle_input_locally = false
-	sub_viewport.gui_disable_input = true
-	_sub_viewport = sub_viewport
+	_sub_viewport = SubViewport.new()
+	_sub_viewport.size_2d_override_stretch = true
+	_sub_viewport.handle_input_locally = false
+	_sub_viewport.gui_disable_input = true
 	
-	var viewport_texture: ViewportTexture = ViewportTexture.new()
-	_viewport_texture = viewport_texture
+	_viewport_texture = ViewportTexture.new()
 	
-	var viewport_texture_rect: TextureRect = TextureRect.new()
-	viewport_texture_rect.texture = viewport_texture
-	viewport_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_viewport_texture_rect = viewport_texture_rect
+	_viewport_texture_rect = TextureRect.new()
+	_viewport_texture_rect.texture = _viewport_texture
+	_viewport_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	
 	var gradient: Gradient = Gradient.new()
 	gradient.offsets = [0, 0.3, 0.6, 1.0]
@@ -253,86 +245,79 @@ func _build_ui() -> void:
 	gradient_texture.fill_from = Vector2(0, 0)
 	gradient_texture.fill_to = Vector2(0, 1)
 	
-	var gradient_texture_rect: TextureRect = TextureRect.new()
-	gradient_texture_rect.texture = gradient_texture
-	gradient_texture_rect.set_anchors_preset(PRESET_FULL_RECT)
-	_gradient_texture_rect = gradient_texture_rect
+	_gradient_texture_rect = TextureRect.new()
+	_gradient_texture_rect.texture = gradient_texture
+	_gradient_texture_rect.set_anchors_preset(PRESET_FULL_RECT)
 	
-	var overlay_margin_container: MarginContainer = MarginContainer.new()
-	overlay_margin_container.add_theme_constant_override("margin_left", PREVIEW_PANEL_MARGIN * _editor_scale)
-	overlay_margin_container.add_theme_constant_override("margin_top", PREVIEW_PANEL_MARGIN * _editor_scale)
-	overlay_margin_container.add_theme_constant_override("margin_right", PREVIEW_PANEL_MARGIN * _editor_scale)
-	overlay_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_PANEL_MARGIN * _editor_scale)
-	overlay_margin_container.set_anchors_preset(PRESET_FULL_RECT)
-	_overlay_margin_container = overlay_margin_container
+	_overlay_margin_container = MarginContainer.new()
+	_overlay_margin_container.add_theme_constant_override("margin_left", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_overlay_margin_container.add_theme_constant_override("margin_top", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_overlay_margin_container.add_theme_constant_override("margin_right", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_overlay_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_overlay_margin_container.set_anchors_preset(PRESET_FULL_RECT)
 	
-	var overlay_container: Control = Control.new()
-	overlay_container.clip_contents = true
-	overlay_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_overlay_container = overlay_container
+	_overlay_container = Control.new()
+	_overlay_container.clip_contents = true
+	_overlay_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
-	var drag_handle: Button = Button.new()
-	drag_handle.flat = true
-	drag_handle.focus_mode = Control.FOCUS_NONE
-	drag_handle.set_anchors_preset(PRESET_FULL_RECT)
-	drag_handle.button_down.connect(_on_drag_handle_button_down)
-	drag_handle.button_up.connect(_on_drag_handle_button_up)
-	_drag_handle = drag_handle
+	_drag_handle = Button.new()
+	_drag_handle.flat = true
+	_drag_handle.focus_mode = Control.FOCUS_NONE
+	_drag_handle.set_anchors_preset(PRESET_FULL_RECT)
+	_drag_handle.button_down.connect(_on_drag_handle_button_down)
+	_drag_handle.button_up.connect(_on_drag_handle_button_up)
 	
-	var resize_left_handle: Button = Button.new()
-	resize_left_handle.size = BUTTON_SIZE * _editor_scale
-	resize_left_handle.icon = resize_icon_top_left
-	resize_left_handle.flat = true
-	resize_left_handle.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	resize_left_handle.expand_icon = true
-	resize_left_handle.set_anchors_and_offsets_preset(PRESET_TOP_LEFT, PRESET_MODE_KEEP_SIZE, 0)
-	resize_left_handle.mouse_default_cursor_shape = Control.CURSOR_FDIAGSIZE
-	resize_left_handle.button_down.connect(_on_resize_handle_button_down)
-	resize_left_handle.button_up.connect(_on_resize_handle_button_up)
-	_resize_left_handle = resize_left_handle
+	_resize_left_handle = Button.new()
+	_resize_left_handle.size = BUTTON_SIZE * _editor_scale
+	_resize_left_handle.icon = resize_icon_top_left
+	_resize_left_handle.flat = true
+	_resize_left_handle.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_resize_left_handle.expand_icon = true
+	_resize_left_handle.set_anchors_and_offsets_preset(PRESET_TOP_LEFT, PRESET_MODE_KEEP_SIZE, 0)
+	_resize_left_handle.mouse_default_cursor_shape = Control.CURSOR_FDIAGSIZE
+	_resize_left_handle.button_down.connect(_on_resize_handle_button_down)
+	_resize_left_handle.button_up.connect(_on_resize_handle_button_up)
 	
-	var resize_right_handle: Button = Button.new()
-	resize_right_handle.size = BUTTON_SIZE * _editor_scale
-	resize_right_handle.icon = resize_icon_top_right
-	resize_right_handle.flat = true
-	resize_right_handle.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	resize_right_handle.expand_icon = true
-	resize_right_handle.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT, PRESET_MODE_KEEP_SIZE, 0)
-	resize_right_handle.mouse_default_cursor_shape = Control.CURSOR_BDIAGSIZE
-	resize_right_handle.button_down.connect(_on_resize_handle_button_down)
-	resize_right_handle.button_up.connect(_on_resize_handle_button_up)
-	_resize_right_handle = resize_right_handle
+	_resize_right_handle = Button.new()
+	_resize_right_handle.size = BUTTON_SIZE * _editor_scale
+	_resize_right_handle.icon = resize_icon_top_right
+	_resize_right_handle.flat = true
+	_resize_right_handle.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_resize_right_handle.expand_icon = true
+	_resize_right_handle.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT, PRESET_MODE_KEEP_SIZE, 0)
+	_resize_right_handle.mouse_default_cursor_shape = Control.CURSOR_BDIAGSIZE
+	_resize_right_handle.button_down.connect(_on_resize_handle_button_down)
+	_resize_right_handle.button_up.connect(_on_resize_handle_button_up)
 	
-	var lock_button: Button = Button.new()
-	lock_button.size = BUTTON_SIZE * _editor_scale
-	lock_button.icon = pin_icon
-	lock_button.flat = true
-	lock_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lock_button.expand_icon = true
-	lock_button.set_anchors_and_offsets_preset(PRESET_BOTTOM_LEFT, PRESET_MODE_KEEP_SIZE, 0)
-	lock_button.toggle_mode = true
-	lock_button.pressed.connect(_on_lock_button_pressed)
-	_lock_button = lock_button
+	_lock_button = Button.new()
+	_lock_button.size = BUTTON_SIZE * _editor_scale
+	_lock_button.icon = pin_icon
+	_lock_button.flat = true
+	_lock_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lock_button.expand_icon = true
+	_lock_button.set_anchors_and_offsets_preset(PRESET_BOTTOM_LEFT, PRESET_MODE_KEEP_SIZE, 0)
+	_lock_button.toggle_mode = true
+	_lock_button.pressed.connect(_on_lock_button_pressed)
 	
 	add_children(self, [
-		preview_placeholder,
-		[preview_panel, [
-			[sub_viewport, [
-				proxy_camera_3d,
+		_preview_placeholder,
+		[_preview_panel, [
+			[_sub_viewport, [
+				_proxy_camera_3d,
 				# TODO: Disable 2D camera when not in use since it causes redraws by
 				# just existing in the tree.
-				proxy_camera_2d
+				_proxy_camera_2d
 			]],
-			[viewport_margin_container, [
-				viewport_texture_rect
+			[_viewport_margin_container, [
+				_viewport_texture_rect
 			]],
-			gradient_texture_rect,
-			[overlay_margin_container, [
-				[overlay_container, [
-					drag_handle,
-					resize_left_handle,
-					resize_right_handle,
-					lock_button
+			_gradient_texture_rect,
+			[_overlay_margin_container, [
+				[_overlay_container, [
+					_drag_handle,
+					_resize_left_handle,
+					_resize_right_handle,
+					_lock_button
 				]]
 			]]
 		]]
