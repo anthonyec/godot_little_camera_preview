@@ -193,7 +193,7 @@ func _process(_delta: float) -> void:
 		_proxy_camera_2d.limit_bottom = _selected_camera_2d.limit_bottom
 		
 func _build_ui() -> void:
-	set_anchors_preset(PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(PRESET_FULL_RECT, PRESET_MODE_KEEP_SIZE, 0)
 	z_index = 999
 	
 	var preview_placeholder: Panel = Panel.new()
