@@ -411,6 +411,11 @@ func request_show() -> void:
 	_viewport_texture_rect.texture = _viewport_texture
 	_viewport_texture.viewport_path = _sub_viewport.get_path()
 	
+	# Wait for proxy camera transforms and sub_viewport render to happen once in
+	# `_process` before showing the camera to avoid stale frames of previously
+	# selected cameras.
+	await get_tree().process_frame
+	
 	visible = true
 	
 func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
