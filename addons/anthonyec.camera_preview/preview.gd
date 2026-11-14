@@ -143,11 +143,6 @@ func _process(_delta: float) -> void:
 	_preview_placeholder.visible = _state == InteractionState.DRAG or _state == InteractionState.ANIMATE_INTO_PLACE
 	_gradient_texture_rect.visible = _show_controls
 	
-	# Update viewport render here to avoid a single frame of the last camera being
-	# shown when switching between cameras. This keeps rendering in sync with the
-	# visibility of the UI
-	_sub_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-	
 	# Sync camera settings.
 	if _camera_type == CameraType.CAMERA_3D and _selected_camera_3d:
 		_sub_viewport.size = _preview_panel.size
@@ -231,7 +226,6 @@ func _build_ui() -> void:
 	sub_viewport.size_2d_override_stretch = true
 	sub_viewport.handle_input_locally = false
 	sub_viewport.gui_disable_input = true
-	sub_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	_sub_viewport = sub_viewport
 	
 	var viewport_texture: ViewportTexture = ViewportTexture.new()
