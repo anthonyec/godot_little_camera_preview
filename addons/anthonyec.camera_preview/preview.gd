@@ -96,6 +96,8 @@ func _process(_delta: float) -> void:
 			mouse_filter = Control.MOUSE_FILTER_STOP
 			
 		InteractionState.DRAG:
+			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_DRAG
+			
 			_preview_placeholder.size = _preview_panel.size
 			
 			var global_mouse_position: Vector2 = get_global_mouse_position()
@@ -112,6 +114,8 @@ func _process(_delta: float) -> void:
 			_preview_placeholder.position = get_pinned_position(_pinned_position)
 			
 		InteractionState.START_ANIMATE_INTO_PLACE:
+			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_CAN_DROP
+			
 			var final_position: Vector2 = get_pinned_position(_pinned_position)
 			var tween: Tween = get_tree().create_tween()
 			
@@ -133,7 +137,6 @@ func _process(_delta: float) -> void:
 	preview_panel_hover_rect = preview_panel_hover_rect.grow(40)
 	
 	var mouse_position: Vector2 = get_global_mouse_position()
-	
 	_show_controls = _state != InteractionState.NONE or preview_panel_hover_rect.has_point(mouse_position)
 	
 	# UI visibility.
@@ -271,6 +274,7 @@ func _build_ui() -> void:
 	_drag_handle.set_anchors_preset(PRESET_FULL_RECT)
 	_drag_handle.button_down.connect(_on_drag_handle_button_down)
 	_drag_handle.button_up.connect(_on_drag_handle_button_up)
+	_drag_handle.mouse_default_cursor_shape = Control.CURSOR_CAN_DROP
 	
 	_resize_left_handle = Button.new()
 	_resize_left_handle.size = BUTTON_SIZE * _editor_scale
