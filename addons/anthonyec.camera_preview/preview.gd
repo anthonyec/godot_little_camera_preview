@@ -191,6 +191,11 @@ func _process(_delta: float) -> void:
 		_proxy_camera_2d.limit_right = _selected_camera_2d.limit_right
 		_proxy_camera_2d.limit_top = _selected_camera_2d.limit_top
 		_proxy_camera_2d.limit_bottom = _selected_camera_2d.limit_bottom
+	
+	# Update viewport render after proxy camera has moved into place to avoid a 
+	# stale frame from being shown when switching cameras.
+	if _selected_camera_2d or _selected_camera_3d:
+		_sub_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 		
 func _build_ui() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT, PRESET_MODE_KEEP_SIZE, 0)
@@ -221,11 +226,11 @@ func _build_ui() -> void:
 	_sub_viewport.size_2d_override_stretch = true
 	_sub_viewport.handle_input_locally = false
 	_sub_viewport.gui_disable_input = true
+	_sub_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	
 	_viewport_texture = ViewportTexture.new()
 	
 	_viewport_texture_rect = TextureRect.new()
-	_viewport_texture_rect.texture = _viewport_texture
 	_viewport_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	
 	var gradient: Gradient = Gradient.new()
@@ -323,8 +328,6 @@ func _build_ui() -> void:
 		]]
 	])
 	
-	_viewport_texture.viewport_path = _sub_viewport.get_path()
-	
 func add_children(root: Node, tree: Array) -> void:
 	for item: Variant in tree:
 		# It's a standard leaf node.
@@ -398,6 +401,16 @@ func request_hide() -> void:
 	visible = false
 	
 func request_show() -> void:
+	# Setting the viewport texture here ensure's the viewport texture reference is
+	# up-to-date. If this is setup during building the UI, if the plugin starts
+	# when the Godot editor first starts up, Godot won't be fully initialized,
+	# causing a broken texture.
+	#
+	# Ideally LCP is only added once the editor is fully ready:
+	# https://github.com/godotengine/godot-proposals/issues/14502
+	_viewport_texture_rect.texture = _viewport_texture
+	_viewport_texture.viewport_path = _sub_viewport.get_path()
+	
 	visible = true
 	
 func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
