@@ -26,6 +26,12 @@ enum InteractionState {
 	# invoked once in the "start" state. 
 	START_ANIMATE_INTO_PLACE,
 	ANIMATE_INTO_PLACE,
+	
+	START_FLOATING,
+	FLOATING,
+	
+	START_END_FLOATING,
+	END_FLOATING
 }
 
 const BUTTON_SIZE: Vector2 = Vector2(30, 30)
@@ -34,6 +40,7 @@ const MARGIN_2D: Vector2 = Vector2(20, 15)
 const PREVIEW_PANEL_MARGIN: float = 2
 const MIN_PREVIEW_PANEL_SIZE: float = 250
 
+var _popout_window: Window
 var _preview_placeholder: Panel
 var _preview_panel: Panel
 var _sub_viewport: SubViewport
@@ -49,6 +56,7 @@ var _drag_handle: Button
 var _resize_left_handle: Button
 var _resize_right_handle: Button
 var _lock_button: Button
+var _popout_button: Button
 
 var _camera_type: CameraType = CameraType.CAMERA_3D
 var _pinned_position: PinnedPosition = PinnedPosition.RIGHT
@@ -130,6 +138,55 @@ func _process(_delta: float) -> void:
 			
 			_state = InteractionState.ANIMATE_INTO_PLACE
 			
+		InteractionState.START_FLOATING:
+			_popout_window = Window.new()
+			_popout_window.size = _preview_panel.size
+			_popout_window.position = _preview_panel.get_screen_position()
+			_popout_window.always_on_top = true
+			_popout_window.close_requested.connect(func () -> void:
+				_state = InteractionState.START_END_FLOATING
+			)
+			_preview_panel.reparent(_popout_window)
+			add_child(_popout_window)
+			
+			_state = InteractionState.FLOATING
+			
+		InteractionState.FLOATING:
+			_preview_panel.position = Vector2.ZERO
+			_preview_panel.size = _popout_window.size
+			
+		InteractionState.START_END_FLOATING:
+			var final_position: Vector2i = get_screen_position() + get_pinned_position(_pinned_position)
+			var final_size: Vector2i = get_clamped_size(_preview_panel.size)
+			
+			var cleanup_window: Callable = func() -> void:
+				_preview_panel.reparent(self)
+				_preview_panel.position = get_pinned_position(_pinned_position)
+				_preview_panel.size = get_clamped_size(_preview_panel.size)
+				
+				_popout_window.queue_free()
+				_state = InteractionState.NONE
+			
+			if final_position.distance_to(_popout_window.position) < 10:
+				cleanup_window.call()
+				_state = InteractionState.NONE
+				return
+				
+			var tween: Tween = get_tree().create_tween()
+			tween.set_parallel(true)
+			tween.set_ease(Tween.EASE_OUT)
+			tween.set_trans(Tween.TRANS_CUBIC)
+			tween.tween_property(_preview_panel, "size", final_size, 0.3)
+			tween.tween_property(_popout_window, "size", final_size, 0.3)
+			tween.tween_property(_popout_window, "position", final_position, 0.3)
+			
+			tween.finished.connect(func() -> void:
+				cleanup_window.call()
+				_state = InteractionState.NONE
+			)
+			
+			_state = InteractionState.END_FLOATING
+
 	# I couldn't get `mouse_entered` and `mouse_exited` events to work 
 	# nicely, so I use rect method instead. Plus using this method it's easy to
 	# grow the hit area size.
@@ -143,6 +200,7 @@ func _process(_delta: float) -> void:
 	_resize_left_handle.visible = _show_controls and _pinned_position == PinnedPosition.RIGHT
 	_resize_right_handle.visible = _show_controls and _pinned_position == PinnedPosition.LEFT
 	_lock_button.visible = _show_controls or _is_locked
+	_popout_button.visible = _show_controls
 	_preview_placeholder.visible = _state == InteractionState.DRAG or _state == InteractionState.ANIMATE_INTO_PLACE
 	_gradient_texture_rect.visible = _show_controls
 	
@@ -308,6 +366,15 @@ func _build_ui() -> void:
 	_lock_button.toggle_mode = true
 	_lock_button.pressed.connect(_on_lock_button_pressed)
 	
+	_popout_button = Button.new()
+	_popout_button.size = BUTTON_SIZE * _editor_scale
+	_popout_button.icon = pin_icon
+	_popout_button.flat = true
+	_popout_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_popout_button.expand_icon = true
+	_popout_button.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT, PRESET_MODE_KEEP_SIZE, 0)
+	_popout_button.pressed.connect(_on_popout_button_pressed)
+	
 	add_children(self, [
 		_preview_placeholder,
 		[_preview_panel, [
@@ -326,7 +393,8 @@ func _build_ui() -> void:
 					_drag_handle,
 					_resize_left_handle,
 					_resize_right_handle,
-					_lock_button
+					_lock_button,
+					_popout_button
 				]]
 			]]
 		]]
@@ -494,6 +562,8 @@ func _on_resize_handle_button_down() -> void:
 	_initial_preview_panel_size = _preview_panel.size
 
 func _on_resize_handle_button_up() -> void:
+	if _state != InteractionState.RESIZE: return
+	
 	_state = InteractionState.NONE
 
 func _on_drag_handle_button_down() -> void:
@@ -510,3 +580,8 @@ func _on_drag_handle_button_up() -> void:
 
 func _on_lock_button_pressed() -> void:
 	_is_locked = !_is_locked
+	
+func _on_popout_button_pressed() -> void:
+	if _state != InteractionState.NONE: return
+	
+	_state = InteractionState.START_FLOATING
