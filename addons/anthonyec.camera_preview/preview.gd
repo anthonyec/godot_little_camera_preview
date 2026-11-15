@@ -233,6 +233,14 @@ func _process(_delta: float) -> void:
 		preview_camera_2d.limit_right = _selected_camera_2d.limit_right
 		preview_camera_2d.limit_top = _selected_camera_2d.limit_top
 		preview_camera_2d.limit_bottom = _selected_camera_2d.limit_bottom
+		
+func _input(event: InputEvent) -> void:
+	# Prevent resize from getting stuck to cursor if mouse up does not happen
+	# inside resize handle button.
+	if event is InputEventMouseButton:
+		if event.is_released():
+			if _state == InteractionState.RESIZE:
+				_state = InteractionState.NONE
 
 func link_with_camera_3d(camera_3d: Camera3D) -> void:
 	# TODO: Camera may not be ready since this method is called in `_enter_tree` 
@@ -386,9 +394,6 @@ func _on_resize_handle_button_down() -> void:
 	_state = InteractionState.RESIZE
 	_initial_mouse_position = get_global_mouse_position()
 	_initial_panel_size = panel.size
-
-func _on_resize_handle_button_up() -> void:
-	_state = InteractionState.NONE
 
 func _on_drag_handle_button_down() -> void:
 	if _state != InteractionState.NONE: return
