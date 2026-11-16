@@ -6,6 +6,7 @@ extends Control
 const resize_icon_top_left: CompressedTexture2D = preload("./GuiResizerTopLeft.svg")
 const resize_icon_top_right: CompressedTexture2D = preload("./GuiResizerTopRight.svg")
 const pin_icon: CompressedTexture2D = preload("./Pin.svg")
+const make_floating_icon: CompressedTexture2D = preload("./MakeFloating.svg")
 
 enum CameraType {
 	CAMERA_2D,
@@ -362,16 +363,18 @@ func _build_ui() -> void:
 	_lock_button.flat = true
 	_lock_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_lock_button.expand_icon = true
+	_lock_button.tooltip_text = "Toggle Pinned Preview"
 	_lock_button.set_anchors_and_offsets_preset(PRESET_BOTTOM_LEFT, PRESET_MODE_KEEP_SIZE, 0)
 	_lock_button.toggle_mode = true
 	_lock_button.pressed.connect(_on_lock_button_pressed)
 	
 	_popout_button = Button.new()
 	_popout_button.size = BUTTON_SIZE * _editor_scale
-	_popout_button.icon = pin_icon
+	_popout_button.icon = make_floating_icon
 	_popout_button.flat = true
 	_popout_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_popout_button.expand_icon = true
+	_popout_button.tooltip_text = "Make Floating"
 	_popout_button.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT, PRESET_MODE_KEEP_SIZE, 0)
 	_popout_button.pressed.connect(_on_popout_button_pressed)
 	
