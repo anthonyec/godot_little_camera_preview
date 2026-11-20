@@ -86,10 +86,10 @@ func _process(_delta: float) -> void:
 			
 			if not _is_popped_out:
 				_preview_panel.size = get_clamped_size(_preview_panel.size)
-				_preview_panel.position = get_global_screen_position() + get_local_pinned_position(_pinned_position)
+				_preview_panel.position = get_container_screen_position() + get_local_pinned_position(_pinned_position)
 			
 		InteractionState.RESIZE:
-			var delta_mouse_position: Vector2i = _initial_mouse_position - Vector2i(get_global_mouse_position())
+			var delta_mouse_position: Vector2i = _initial_mouse_position - DisplayServer.mouse_get_position()
 			var resized_size: Vector2i = _preview_panel.size
 		
 			if _pinned_position == PinnedPosition.LEFT:
@@ -99,7 +99,7 @@ func _process(_delta: float) -> void:
 				resized_size = _initial_preview_panel_size + delta_mouse_position
 			
 			_preview_panel.size = get_clamped_size(resized_size)
-			_preview_panel.position = get_global_screen_position() + get_local_pinned_position(_pinned_position)
+			_preview_panel.position = get_container_screen_position() + get_local_pinned_position(_pinned_position)
 			
 			# Block mouse events from reaching the viewport so resizing isn't
 			# interrupted if the cursor leaves the handle. It also prevents underlying
@@ -109,29 +109,35 @@ func _process(_delta: float) -> void:
 		InteractionState.DRAG:
 			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_DRAG
 			
-			var global_mouse_position: Vector2i = Vector2i(get_global_mouse_position())
+			var mouse_position: Vector2i = DisplayServer.mouse_get_position()
 			
-			if _is_popped_out:
-				var offset: Vector2i = _initial_mouse_position - _initial_preview_panel_position
-				_preview_panel.position = global_mouse_position - offset
-			else:
-				_preview_placeholder.size = _preview_panel.size
+			var mouse_to_panel_difference: Vector2i = _initial_mouse_position - _initial_preview_panel_position
+			var desired_panel_position: Vector2i = mouse_position - mouse_to_panel_difference
+			_preview_panel.position = mouse_position - mouse_to_panel_difference
+			
+			if not _is_popped_out:
+				_preview_panel.position = _preview_panel.position.clamp(
+					get_container_screen_position(), 
+					get_container_screen_position() + get_container_size() - _preview_panel.size
+				)
 				
-				var offset: Vector2i = get_global_screen_position() + (_initial_mouse_position - _initial_preview_panel_position)
-				_preview_panel.position = global_mouse_position - offset
-				_preview_panel.position = get_global_screen_position() + _preview_panel.position.clamp(Vector2.ZERO, size - Vector2(_preview_panel.size))
-
-				if global_mouse_position.x < global_position.x + size.x / 2:
-					_pinned_position = PinnedPosition.LEFT
-				else:
-					_pinned_position = PinnedPosition.RIGHT
-					
-				_preview_placeholder.position = get_local_pinned_position(_pinned_position)
+				var distance_to_desired_panel_position: float = desired_panel_position.distance_to(_preview_panel.position)
+				
+				if distance_to_desired_panel_position > 500:
+					_is_popped_out = true
+			
+			if mouse_position.x < global_position.x + size.x / 2:
+				_pinned_position = PinnedPosition.LEFT
+			else:
+				_pinned_position = PinnedPosition.RIGHT
+				
+			_preview_placeholder.size = _preview_panel.size	
+			_preview_placeholder.position = get_local_pinned_position(_pinned_position)
 			
 		InteractionState.START_ANIMATE_INTO_PLACE:
 			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_CAN_DROP
 			
-			var final_position: Vector2i = get_global_screen_position() + get_local_pinned_position(_pinned_position)
+			var final_position: Vector2i = get_container_screen_position() + get_local_pinned_position(_pinned_position)
 			
 			var window_tween: Tween = create_tween()
 			window_tween.set_ease(Tween.EASE_OUT)
@@ -147,7 +153,7 @@ func _process(_delta: float) -> void:
 			
 		InteractionState.START_ANIMATE_POPOUT:
 			var final_size: Vector2i = Vector2i(Vector2(_preview_panel.size) * Vector2(1.2, 1.2))
-			var final_position: Vector2i = get_global_screen_position() + get_local_pinned_position(_pinned_position, final_size)
+			var final_position: Vector2i = get_container_screen_position() + get_local_pinned_position(_pinned_position, final_size)
 			final_position += Vector2i(float(final_size.x) * 0.4, float(final_size.y) * 0.2)
 			
 			var highest_vertical_position: int = mini(_preview_panel.position.y, final_position.y)
@@ -181,7 +187,7 @@ func _process(_delta: float) -> void:
 			
 		InteractionState.START_ANIMATE_POPIN:
 			var final_size: Vector2i = get_clamped_size(Vector2i(Vector2(_preview_panel.size) / Vector2(1.2, 1.2)))
-			var final_position: Vector2i = get_global_screen_position() + get_local_pinned_position(_pinned_position, final_size)
+			var final_position: Vector2i = get_container_screen_position() + get_local_pinned_position(_pinned_position, final_size)
 			
 			var highest_vertical_position: int = mini(_preview_panel.position.y, final_position.y)
 			var bounce_vertical_apex: int = highest_vertical_position - (size.y * 0.05)
@@ -536,7 +542,7 @@ func get_local_pinned_position(pinned_position: PinnedPosition, preview_panel_si
 			return Vector2i(0, size.y) - Vector2i(0, preview_panel_size.y) - Vector2i(-margin.x, margin.y)
 			
 		PinnedPosition.RIGHT:
-			return Vector2i(size) - Vector2i(preview_panel_size) - margin
+			return get_container_size() - Vector2i(preview_panel_size) - margin
 			
 		_:
 			assert(false, "Unknown pinned position %s" % str(pinned_position))
@@ -589,14 +595,17 @@ func get_project_window_ratio() -> float:
 	
 	return float(project_window_size.y) / float(project_window_size.x)
 	
-func get_global_screen_position() -> Vector2i:
+func get_container_screen_position() -> Vector2i:
 	return Vector2i(get_screen_position())
+	
+func get_container_size() -> Vector2i:
+	return Vector2i(size)
 
 func _on_resize_handle_button_down() -> void:
 	if _state != InteractionState.NONE: return
 	
 	_state = InteractionState.RESIZE
-	_initial_mouse_position = Vector2i(get_global_mouse_position())
+	_initial_mouse_position = DisplayServer.mouse_get_position()
 	_initial_preview_panel_size = _preview_panel.size
 
 func _on_resize_handle_button_up() -> void:
@@ -608,7 +617,7 @@ func _on_drag_handle_button_down() -> void:
 	if _state != InteractionState.NONE: return
 		
 	_state = InteractionState.DRAG
-	_initial_mouse_position = Vector2i(get_global_mouse_position())
+	_initial_mouse_position = DisplayServer.mouse_get_position()
 	_initial_preview_panel_position = _preview_panel.position
 
 func _on_drag_handle_button_up() -> void:
