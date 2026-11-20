@@ -19,6 +19,7 @@ enum PinnedPosition {
 
 enum InteractionState {
 	NONE,
+	FLOATING,
 	RESIZE,
 	DRAG,
 
@@ -26,6 +27,12 @@ enum InteractionState {
 	# invoked once in the "start" state. 
 	START_ANIMATE_INTO_PLACE,
 	ANIMATE_INTO_PLACE,
+	
+	START_ANIMATE_POPOUT,
+	ANIMATE_POPOUT,
+	
+	START_ANIMATE_POPIN,
+	ANIMATE_POPIN
 }
 
 const BUTTON_SIZE: Vector2 = Vector2(30, 30)
@@ -33,6 +40,7 @@ const MARGIN_3D: Vector2i = Vector2i(10, 10)
 const MARGIN_2D: Vector2i = Vector2i(20, 15)
 const PREVIEW_PANEL_MARGIN: int = 2
 const MIN_PREVIEW_PANEL_SIZE: int = 250
+const POP_DURATION: float = 0.4
 
 var _preview_placeholder: Panel
 var _preview_panel: Window
@@ -55,6 +63,7 @@ var _camera_type: CameraType = CameraType.CAMERA_3D
 var _pinned_position: PinnedPosition = PinnedPosition.RIGHT
 var _editor_scale: float = EditorInterface.get_editor_scale()
 var _is_locked: bool
+var _is_popped_out: bool
 var _show_controls: bool
 var _selected_camera_3d: Camera3D
 var _selected_camera_2d: Camera2D
@@ -72,11 +81,12 @@ func _process(_delta: float) -> void:
 	
 	match _state:
 		InteractionState.NONE:
-			_preview_panel.size = get_clamped_size(_preview_panel.size)
-			_preview_panel.position = get_global_screen_position() + get_local_pinned_position(_pinned_position)
-			
 			# Ensure viewport UI can be interacted with.
 			mouse_filter = Control.MOUSE_FILTER_IGNORE
+			
+			if not _is_popped_out:
+				_preview_panel.size = get_clamped_size(_preview_panel.size)
+				_preview_panel.position = get_global_screen_position() + get_local_pinned_position(_pinned_position)
 			
 		InteractionState.RESIZE:
 			var delta_mouse_position: Vector2i = _initial_mouse_position - Vector2i(get_global_mouse_position())
@@ -99,26 +109,31 @@ func _process(_delta: float) -> void:
 		InteractionState.DRAG:
 			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_DRAG
 			
-			_preview_placeholder.size = _preview_panel.size
-			
 			var global_mouse_position: Vector2i = Vector2i(get_global_mouse_position())
-			var offset: Vector2i = get_global_screen_position() + (_initial_mouse_position - _initial_preview_panel_position)
-			_preview_panel.position = global_mouse_position - offset
-			_preview_panel.position = get_global_screen_position() + _preview_panel.position.clamp(Vector2.ZERO, size - Vector2(_preview_panel.size))
-
-			if global_mouse_position.x < global_position.x + size.x / 2:
-				_pinned_position = PinnedPosition.LEFT
+			
+			if _is_popped_out:
+				var offset: Vector2i = _initial_mouse_position - _initial_preview_panel_position
+				_preview_panel.position = global_mouse_position - offset
 			else:
-				_pinned_position = PinnedPosition.RIGHT
+				_preview_placeholder.size = _preview_panel.size
 				
-			_preview_placeholder.position = get_local_pinned_position(_pinned_position)
+				var offset: Vector2i = get_global_screen_position() + (_initial_mouse_position - _initial_preview_panel_position)
+				_preview_panel.position = global_mouse_position - offset
+				_preview_panel.position = get_global_screen_position() + _preview_panel.position.clamp(Vector2.ZERO, size - Vector2(_preview_panel.size))
+
+				if global_mouse_position.x < global_position.x + size.x / 2:
+					_pinned_position = PinnedPosition.LEFT
+				else:
+					_pinned_position = PinnedPosition.RIGHT
+					
+				_preview_placeholder.position = get_local_pinned_position(_pinned_position)
 			
 		InteractionState.START_ANIMATE_INTO_PLACE:
 			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_CAN_DROP
 			
 			var final_position: Vector2i = get_global_screen_position() + get_local_pinned_position(_pinned_position)
 			
-			var window_tween: Tween = get_tree().create_tween()
+			var window_tween: Tween = create_tween()
 			window_tween.set_ease(Tween.EASE_OUT)
 			window_tween.set_trans(Tween.TRANS_CUBIC)
 			window_tween.tween_property(_preview_panel, "position", final_position, 0.3)
@@ -130,6 +145,73 @@ func _process(_delta: float) -> void:
 			
 			_state = InteractionState.ANIMATE_INTO_PLACE
 			
+		InteractionState.START_ANIMATE_POPOUT:
+			var final_size: Vector2i = Vector2i(Vector2(_preview_panel.size) * Vector2(1.2, 1.2))
+			var final_position: Vector2i = get_global_screen_position() + get_local_pinned_position(_pinned_position, final_size)
+			final_position += Vector2i(float(final_size.x) * 0.4, float(final_size.y) * 0.2)
+			
+			var highest_vertical_position: int = mini(_preview_panel.position.y, final_position.y)
+			var bounce_vertical_apex: int = highest_vertical_position - (size.y * 0.05)
+			
+			var horizontal_tween: Tween = create_tween()
+			horizontal_tween.set_ease(Tween.EASE_IN_OUT)
+			horizontal_tween.set_trans(Tween.TRANS_CUBIC)
+			horizontal_tween.tween_property(_preview_panel, "position:x", final_position.x, POP_DURATION)
+			
+			var vertical_tween: Tween = create_tween()
+			vertical_tween.set_ease(Tween.EASE_IN_OUT)
+			vertical_tween.set_trans(Tween.TRANS_CUBIC)
+			vertical_tween.tween_property(_preview_panel, "position:y", bounce_vertical_apex, POP_DURATION / 2)
+			vertical_tween.tween_property(_preview_panel, "position:y", final_position.y, POP_DURATION / 2)
+			
+			var size_tween: Tween = create_tween()
+			size_tween.set_ease(Tween.EASE_IN_OUT)
+			size_tween.set_trans(Tween.TRANS_CUBIC)
+			size_tween.tween_property(_preview_panel, "size", final_size, POP_DURATION)
+			
+			size_tween.finished.connect(func() -> void:
+				_preview_panel.transient = false
+				_state = InteractionState.NONE	
+			)
+			
+			_state = InteractionState.ANIMATE_POPOUT
+			
+		InteractionState.ANIMATE_POPOUT:
+			pass
+			
+		InteractionState.START_ANIMATE_POPIN:
+			var final_size: Vector2i = get_clamped_size(Vector2i(Vector2(_preview_panel.size) / Vector2(1.2, 1.2)))
+			var final_position: Vector2i = get_global_screen_position() + get_local_pinned_position(_pinned_position, final_size)
+			
+			var highest_vertical_position: int = mini(_preview_panel.position.y, final_position.y)
+			var bounce_vertical_apex: int = highest_vertical_position - (size.y * 0.05)
+			
+			var horizontal_tween: Tween = create_tween()
+			horizontal_tween.set_ease(Tween.EASE_IN_OUT)
+			horizontal_tween.set_trans(Tween.TRANS_CUBIC)
+			horizontal_tween.tween_property(_preview_panel, "position:x", final_position.x, POP_DURATION)
+			
+			var vertical_tween: Tween = create_tween()
+			vertical_tween.set_ease(Tween.EASE_IN_OUT)
+			vertical_tween.set_trans(Tween.TRANS_CUBIC)
+			vertical_tween.tween_property(_preview_panel, "position:y", bounce_vertical_apex, POP_DURATION / 2)
+			vertical_tween.tween_property(_preview_panel, "position:y", final_position.y, POP_DURATION / 2)
+			
+			var size_tween: Tween = create_tween()
+			size_tween.set_ease(Tween.EASE_IN_OUT)
+			size_tween.set_trans(Tween.TRANS_CUBIC)
+			size_tween.tween_property(_preview_panel, "size", final_size, POP_DURATION)
+			
+			size_tween.finished.connect(func() -> void:
+				_preview_panel.transient = true
+				_state = InteractionState.NONE	
+			)
+			
+			_state = InteractionState.ANIMATE_POPIN
+			
+		InteractionState.ANIMATE_POPIN:
+			pass
+			
 	# I couldn't get `mouse_entered` and `mouse_exited` events to work 
 	# nicely, so I use rect method instead. Plus using this method it's easy to
 	# grow the hit area size.
@@ -140,10 +222,10 @@ func _process(_delta: float) -> void:
 	_show_controls = _state != InteractionState.NONE or preview_panel_hover_rect.has_point(mouse_position)
 	
 	# UI visibility.
-	_resize_left_handle.visible = _show_controls and _pinned_position == PinnedPosition.RIGHT
-	_resize_right_handle.visible = _show_controls and _pinned_position == PinnedPosition.LEFT
-	_lock_button.visible = _show_controls or _is_locked
-	_preview_placeholder.visible = _state == InteractionState.DRAG or _state == InteractionState.ANIMATE_INTO_PLACE
+	_resize_left_handle.visible = _show_controls and _pinned_position == PinnedPosition.RIGHT and not _is_popped_out
+	_resize_right_handle.visible = _show_controls and _pinned_position == PinnedPosition.LEFT and not _is_popped_out
+	_lock_button.visible = (_show_controls or _is_locked) and not _is_popped_out
+	_preview_placeholder.visible = (_state == InteractionState.DRAG or _state == InteractionState.ANIMATE_INTO_PLACE) and not _is_popped_out
 	_gradient_texture_rect.visible = _show_controls
 	
 	# Sync camera settings.
@@ -208,11 +290,12 @@ func _build_ui() -> void:
 	_preview_placeholder.modulate = Color(1.0, 1.0, 1.0, 0.7)
 	
 	_preview_panel = Window.new()
-	_preview_panel.always_on_top = true
-	# Set initial width.
 	_preview_panel.size.x = MIN_PREVIEW_PANEL_SIZE * _editor_scale
+	_preview_panel.minimize_disabled = true
+	_preview_panel.maximize_disabled = true
 	_preview_panel.borderless = true
 	_preview_panel.transparent = true
+	_preview_panel.transient = true
 	
 	_proxy_camera_3d = Camera3D.new()
 	
@@ -414,7 +497,7 @@ func unlink_camera() -> void:
 	_lock_button.button_pressed = false
 	
 func request_hide() -> void:
-	if _is_locked: return
+	if _is_locked or _is_popped_out: return
 	
 	# When Godot starts with a camera is selected, it has not created the 
 	# window yet.
@@ -442,7 +525,7 @@ func request_show() -> void:
 	
 ## Returns the position the preview would be at for a pinned position relative 
 ## to the container control that fills the 2D or 3D viewport.
-func get_local_pinned_position(pinned_position: PinnedPosition) -> Vector2i:
+func get_local_pinned_position(pinned_position: PinnedPosition, preview_panel_size: Vector2 = _preview_panel.size) -> Vector2i:
 	var margin: Vector2i = MARGIN_3D * _editor_scale
 	
 	if _camera_type == CameraType.CAMERA_2D:
@@ -450,10 +533,10 @@ func get_local_pinned_position(pinned_position: PinnedPosition) -> Vector2i:
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
-			return Vector2i(0, size.y) - Vector2i(0, _preview_panel.size.y) - Vector2i(-margin.x, margin.y)
+			return Vector2i(0, size.y) - Vector2i(0, preview_panel_size.y) - Vector2i(-margin.x, margin.y)
 			
 		PinnedPosition.RIGHT:
-			return Vector2i(size) - Vector2i(_preview_panel.size) - margin
+			return Vector2i(size) - Vector2i(preview_panel_size) - margin
 			
 		_:
 			assert(false, "Unknown pinned position %s" % str(pinned_position))
@@ -517,6 +600,8 @@ func _on_resize_handle_button_down() -> void:
 	_initial_preview_panel_size = _preview_panel.size
 
 func _on_resize_handle_button_up() -> void:
+	if _state != InteractionState.RESIZE: return
+	
 	_state = InteractionState.NONE
 
 func _on_drag_handle_button_down() -> void:
@@ -529,10 +614,21 @@ func _on_drag_handle_button_down() -> void:
 func _on_drag_handle_button_up() -> void:
 	if _state != InteractionState.DRAG: return
 	
-	_state = InteractionState.START_ANIMATE_INTO_PLACE
+	if _is_popped_out:
+		_state = InteractionState.NONE
+	else:
+		_state = InteractionState.START_ANIMATE_INTO_PLACE
 
 func _on_lock_button_pressed() -> void:
 	_is_locked = !_is_locked
 
 func _on_popout_button_pressed() -> void:
-	pass
+	if _state != InteractionState.NONE: return
+	
+	if _is_popped_out:
+		_state = InteractionState.START_ANIMATE_POPIN
+	else:
+		_state = InteractionState.START_ANIMATE_POPOUT
+		
+	_is_popped_out = !_is_popped_out
+	
