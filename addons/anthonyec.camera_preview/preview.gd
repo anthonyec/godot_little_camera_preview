@@ -29,13 +29,13 @@ enum InteractionState {
 }
 
 const BUTTON_SIZE: Vector2 = Vector2(30, 30)
-const MARGIN_3D: Vector2 = Vector2(10, 10)
-const MARGIN_2D: Vector2 = Vector2(20, 15)
-const PREVIEW_PANEL_MARGIN: float = 2
-const MIN_PREVIEW_PANEL_SIZE: float = 250
+const MARGIN_3D: Vector2i = Vector2i(10, 10)
+const MARGIN_2D: Vector2i = Vector2i(20, 15)
+const PREVIEW_PANEL_MARGIN: int = 2
+const MIN_PREVIEW_PANEL_SIZE: int = 250
 
 var _preview_placeholder: Panel
-var _preview_panel: Panel
+var _preview_panel: Window
 var _sub_viewport: SubViewport
 var _proxy_camera_3d: Camera3D
 var _proxy_camera_2d: Camera2D
@@ -49,6 +49,7 @@ var _drag_handle: Button
 var _resize_left_handle: Button
 var _resize_right_handle: Button
 var _lock_button: Button
+var _popout_button: Button
 
 var _camera_type: CameraType = CameraType.CAMERA_3D
 var _pinned_position: PinnedPosition = PinnedPosition.RIGHT
@@ -59,9 +60,9 @@ var _selected_camera_3d: Camera3D
 var _selected_camera_2d: Camera2D
 
 var _state: InteractionState = InteractionState.NONE
-var _initial_mouse_position: Vector2
-var _initial_preview_panel_size: Vector2
-var _initial_preview_panel_position: Vector2
+var _initial_mouse_position: Vector2i
+var _initial_preview_panel_size: Vector2i
+var _initial_preview_panel_position: Vector2i
 
 func _ready() -> void:
 	_build_ui()	
@@ -72,14 +73,14 @@ func _process(_delta: float) -> void:
 	match _state:
 		InteractionState.NONE:
 			_preview_panel.size = get_clamped_size(_preview_panel.size)
-			_preview_panel.position = get_pinned_position(_pinned_position)
+			_preview_panel.position = get_global_screen_position() + get_local_pinned_position(_pinned_position)
 			
 			# Ensure viewport UI can be interacted with.
 			mouse_filter = Control.MOUSE_FILTER_IGNORE
 			
 		InteractionState.RESIZE:
-			var delta_mouse_position: Vector2 = _initial_mouse_position - get_global_mouse_position()
-			var resized_size: Vector2 = _preview_panel.size
+			var delta_mouse_position: Vector2i = _initial_mouse_position - Vector2i(get_global_mouse_position())
+			var resized_size: Vector2i = _preview_panel.size
 		
 			if _pinned_position == PinnedPosition.LEFT:
 				resized_size = _initial_preview_panel_size - delta_mouse_position
@@ -88,7 +89,7 @@ func _process(_delta: float) -> void:
 				resized_size = _initial_preview_panel_size + delta_mouse_position
 			
 			_preview_panel.size = get_clamped_size(resized_size)
-			_preview_panel.position = get_pinned_position(_pinned_position)
+			_preview_panel.position = get_global_screen_position() + get_local_pinned_position(_pinned_position)
 			
 			# Block mouse events from reaching the viewport so resizing isn't
 			# interrupted if the cursor leaves the handle. It also prevents underlying
@@ -100,30 +101,29 @@ func _process(_delta: float) -> void:
 			
 			_preview_placeholder.size = _preview_panel.size
 			
-			var global_mouse_position: Vector2 = get_global_mouse_position()
-			var offset: Vector2 = _initial_mouse_position - _initial_preview_panel_position
-			
-			_preview_panel.global_position = global_mouse_position - offset
-			_preview_panel.position = _preview_panel.position.clamp(Vector2.ZERO, size - _preview_panel.size)
+			var global_mouse_position: Vector2i = Vector2i(get_global_mouse_position())
+			var offset: Vector2i = get_global_screen_position() + (_initial_mouse_position - _initial_preview_panel_position)
+			_preview_panel.position = global_mouse_position - offset
+			_preview_panel.position = get_global_screen_position() + _preview_panel.position.clamp(Vector2.ZERO, size - Vector2(_preview_panel.size))
 
 			if global_mouse_position.x < global_position.x + size.x / 2:
 				_pinned_position = PinnedPosition.LEFT
 			else:
 				_pinned_position = PinnedPosition.RIGHT
 				
-			_preview_placeholder.position = get_pinned_position(_pinned_position)
+			_preview_placeholder.position = get_local_pinned_position(_pinned_position)
 			
 		InteractionState.START_ANIMATE_INTO_PLACE:
 			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_CAN_DROP
 			
-			var final_position: Vector2 = get_pinned_position(_pinned_position)
-			var tween: Tween = get_tree().create_tween()
+			var final_position: Vector2i = get_global_screen_position() + get_local_pinned_position(_pinned_position)
 			
-			tween.set_ease(Tween.EASE_OUT)
-			tween.set_trans(Tween.TRANS_CUBIC)
-			tween.tween_property(_preview_panel, "position", final_position, 0.3)
+			var window_tween: Tween = get_tree().create_tween()
+			window_tween.set_ease(Tween.EASE_OUT)
+			window_tween.set_trans(Tween.TRANS_CUBIC)
+			window_tween.tween_property(_preview_panel, "position", final_position, 0.3)
 			
-			tween.finished.connect(func() -> void:
+			window_tween.finished.connect(func() -> void:
 				_preview_panel.position = final_position
 				_state = InteractionState.NONE
 			)
@@ -133,10 +133,10 @@ func _process(_delta: float) -> void:
 	# I couldn't get `mouse_entered` and `mouse_exited` events to work 
 	# nicely, so I use rect method instead. Plus using this method it's easy to
 	# grow the hit area size.
-	var preview_panel_hover_rect: Rect2 = Rect2(_preview_panel.global_position, _preview_panel.size)
+	var preview_panel_hover_rect: Rect2 = Rect2(_preview_panel.position, _preview_panel.size)
 	preview_panel_hover_rect = preview_panel_hover_rect.grow(40)
 	
-	var mouse_position: Vector2 = get_global_mouse_position()
+	var mouse_position: Vector2i = Vector2i(get_global_mouse_position())
 	_show_controls = _state != InteractionState.NONE or preview_panel_hover_rect.has_point(mouse_position)
 	
 	# UI visibility.
@@ -171,13 +171,13 @@ func _process(_delta: float) -> void:
 		_proxy_camera_3d.environment = _selected_camera_3d.environment	
 	
 	if _camera_type == CameraType.CAMERA_2D and _selected_camera_2d:
-		var project_window_size: Vector2 = get_project_window_size()
+		var project_window_size: Vector2i = get_project_window_size()
 		var ratio: float = project_window_size.x / _preview_panel.size.x
 		
 		# TODO: Is there a better way to fix this?
 		# The camera border is visible sometimes due to pixel rounding. 
 		# Subtract 1px from right and bottom to hide this.
-		var hide_camera_border_fix: Vector2 = Vector2(1, 1)
+		var hide_camera_border_fix: Vector2i = Vector2i(1, 1)
 		
 		_sub_viewport.size = _preview_panel.size
 		_sub_viewport.size_2d_override = (_preview_panel.size - hide_camera_border_fix) * ratio
@@ -207,10 +207,12 @@ func _build_ui() -> void:
 	_preview_placeholder = Panel.new()
 	_preview_placeholder.modulate = Color(1.0, 1.0, 1.0, 0.7)
 	
-	_preview_panel = Panel.new()
+	_preview_panel = Window.new()
+	_preview_panel.always_on_top = true
 	# Set initial width.
 	_preview_panel.size.x = MIN_PREVIEW_PANEL_SIZE * _editor_scale
-	_preview_panel.clip_contents = true
+	_preview_panel.borderless = true
+	_preview_panel.transparent = true
 	
 	_proxy_camera_3d = Camera3D.new()
 	
@@ -308,6 +310,16 @@ func _build_ui() -> void:
 	_lock_button.toggle_mode = true
 	_lock_button.pressed.connect(_on_lock_button_pressed)
 	
+	_popout_button = Button.new()
+	_popout_button.size = BUTTON_SIZE * _editor_scale
+	_popout_button.icon = pin_icon
+	_popout_button.flat = true
+	_popout_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_popout_button.expand_icon = true
+	_popout_button.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT, PRESET_MODE_KEEP_SIZE, 0)
+	_popout_button.toggle_mode = true
+	_popout_button.pressed.connect(_on_popout_button_pressed)
+	
 	add_children(self, [
 		_preview_placeholder,
 		[_preview_panel, [
@@ -326,7 +338,8 @@ func _build_ui() -> void:
 					_drag_handle,
 					_resize_left_handle,
 					_resize_right_handle,
-					_lock_button
+					_lock_button,
+					_popout_button
 				]]
 			]]
 		]]
@@ -402,7 +415,12 @@ func unlink_camera() -> void:
 	
 func request_hide() -> void:
 	if _is_locked: return
-	visible = false
+	
+	# When Godot starts with a camera is selected, it has not created the 
+	# window yet.
+	if _preview_panel == null: return
+	
+	_preview_panel.visible = false
 	
 func request_show() -> void:
 	# Setting the viewport texture here ensure's the viewport texture reference is
@@ -420,20 +438,22 @@ func request_show() -> void:
 	# selected cameras.
 	await get_tree().process_frame
 	
-	visible = true
+	_preview_panel.visible = true
 	
-func get_pinned_position(pinned_position: PinnedPosition) -> Vector2:
-	var margin: Vector2 = MARGIN_3D * _editor_scale
+## Returns the position the preview would be at for a pinned position relative 
+## to the container control that fills the 2D or 3D viewport.
+func get_local_pinned_position(pinned_position: PinnedPosition) -> Vector2i:
+	var margin: Vector2i = MARGIN_3D * _editor_scale
 	
 	if _camera_type == CameraType.CAMERA_2D:
 		margin = MARGIN_2D * _editor_scale
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
-			return Vector2(0, size.y) - Vector2(0, _preview_panel.size.y) - Vector2(-margin.x, margin.y)
+			return Vector2i(0, size.y) - Vector2i(0, _preview_panel.size.y) - Vector2i(-margin.x, margin.y)
 			
 		PinnedPosition.RIGHT:
-			return size - _preview_panel.size - margin
+			return Vector2i(size) - Vector2i(_preview_panel.size) - margin
 			
 		_:
 			assert(false, "Unknown pinned position %s" % str(pinned_position))
@@ -475,22 +495,25 @@ func get_clamped_size(desired_size: Vector2) -> Vector2:
 	# Round down to avoid sub-pixel artifacts, mainly seen around the margins.
 	return clamped_size.floor()
 	
-func get_project_window_size() -> Vector2:
-	var window_width: float = float(ProjectSettings.get_setting("display/window/size/viewport_width"))
-	var window_height: float = float(ProjectSettings.get_setting("display/window/size/viewport_height"))
+func get_project_window_size() -> Vector2i:
+	var window_width: int = int(ProjectSettings.get_setting("display/window/size/viewport_width"))
+	var window_height: int = int(ProjectSettings.get_setting("display/window/size/viewport_height"))
 	
-	return Vector2(window_width, window_height)
+	return Vector2i(window_width, window_height)
 	
 func get_project_window_ratio() -> float:
-	var project_window_size: Vector2 = get_project_window_size()
+	var project_window_size: Vector2i = get_project_window_size()
 	
-	return project_window_size.y / project_window_size.x
+	return float(project_window_size.y) / float(project_window_size.x)
+	
+func get_global_screen_position() -> Vector2i:
+	return Vector2i(get_screen_position())
 
 func _on_resize_handle_button_down() -> void:
 	if _state != InteractionState.NONE: return
 	
 	_state = InteractionState.RESIZE
-	_initial_mouse_position = get_global_mouse_position()
+	_initial_mouse_position = Vector2i(get_global_mouse_position())
 	_initial_preview_panel_size = _preview_panel.size
 
 func _on_resize_handle_button_up() -> void:
@@ -500,8 +523,8 @@ func _on_drag_handle_button_down() -> void:
 	if _state != InteractionState.NONE: return
 		
 	_state = InteractionState.DRAG
-	_initial_mouse_position = get_global_mouse_position()
-	_initial_preview_panel_position = _preview_panel.global_position
+	_initial_mouse_position = Vector2i(get_global_mouse_position())
+	_initial_preview_panel_position = _preview_panel.position
 
 func _on_drag_handle_button_up() -> void:
 	if _state != InteractionState.DRAG: return
@@ -510,3 +533,6 @@ func _on_drag_handle_button_up() -> void:
 
 func _on_lock_button_pressed() -> void:
 	_is_locked = !_is_locked
+
+func _on_popout_button_pressed() -> void:
+	pass
