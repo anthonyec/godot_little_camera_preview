@@ -41,6 +41,8 @@ const MARGIN_2D: Vector2i = Vector2i(20, 15)
 const PREVIEW_PANEL_MARGIN: int = 2
 const MIN_PREVIEW_PANEL_SIZE: int = 250
 const POP_DURATION: float = 0.4
+const MIN_PULLOUT_DISTANCE: float = 500
+const MIN_PULLOUT_VELOCITY: float = 5000
 
 var _preview_placeholder: Panel
 var _preview_panel: Window
@@ -76,7 +78,7 @@ var _initial_preview_panel_position: Vector2i
 func _ready() -> void:
 	_build_ui()	
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not visible: return
 	
 	match _state:
@@ -110,22 +112,26 @@ func _process(_delta: float) -> void:
 			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_DRAG
 			
 			var mouse_position: Vector2i = DisplayServer.mouse_get_position()
-			
 			var mouse_to_panel_difference: Vector2i = _initial_mouse_position - _initial_preview_panel_position
 			var desired_panel_position: Vector2i = mouse_position - mouse_to_panel_difference
 			_preview_panel.position = mouse_position - mouse_to_panel_difference
 			
 			if not _is_popped_out:
-				_preview_panel.position = _preview_panel.position.clamp(
+				var clamped_panel_position: Vector2i = _preview_panel.position.clamp(
 					get_container_screen_position(), 
 					get_container_screen_position() + get_container_size() - _preview_panel.size
 				)
 				
-				var distance_to_desired_panel_position: float = desired_panel_position.distance_to(_preview_panel.position)
+				var clamped_to_desired_direction: Vector2 = Vector2(desired_panel_position - clamped_panel_position).normalized()
+				var clamped_to_desired_distance: float = clamped_panel_position.distance_to(desired_panel_position)
+				var pulled_out_percent: float = clamped_to_desired_distance / MIN_PULLOUT_DISTANCE
+				var tension: float = 1 / (1 + pulled_out_percent * 20)				
 				
-				if distance_to_desired_panel_position > 500:
+				_preview_panel.position = Vector2(clamped_panel_position).lerp(Vector2(desired_panel_position), tension)
+				
+				if Input.get_last_mouse_velocity().length() < 1 and clamped_to_desired_distance > MIN_PULLOUT_DISTANCE:
 					_is_popped_out = true
-			
+
 			if mouse_position.x < global_position.x + size.x / 2:
 				_pinned_position = PinnedPosition.LEFT
 			else:
