@@ -317,8 +317,24 @@ func _build_ui() -> void:
 	_preview_window.minimize_disabled = true
 	_preview_window.maximize_disabled = true
 	_preview_window.borderless = true
-	_preview_window.transparent = true
 	_preview_window.transient = true
+	
+	# Preview window can't have rounded corners because it would require to have
+	# per-pixel transparent set at the project level. So editor plugin windows
+	# can't be transparent. And you can't do cheeky things like setting per-pixel
+	# transparency on temporarily, since it requires an editor restart.
+	var editor_theme: Theme = EditorInterface.get_editor_theme()
+	var editor_panel_style_box: StyleBox = editor_theme.get_stylebox("panel", "Panel")
+	var custom_panel_style_box: StyleBox = editor_panel_style_box.duplicate() as StyleBoxFlat
+	custom_panel_style_box.corner_radius_top_left = 0
+	custom_panel_style_box.corner_radius_top_right = 0
+	custom_panel_style_box.corner_radius_bottom_right = 0
+	custom_panel_style_box.corner_radius_bottom_left = 0
+	
+	var preview_panel: Panel = Panel.new()
+	preview_panel.clip_contents = true
+	preview_panel.set_anchors_preset(PRESET_FULL_RECT)
+	preview_panel.add_theme_stylebox_override("panel", custom_panel_style_box)
 	
 	_proxy_camera_3d = Camera3D.new()
 	
@@ -366,6 +382,7 @@ func _build_ui() -> void:
 	_gradient_texture_rect.set_anchors_preset(PRESET_FULL_RECT)
 	
 	_overlay_margin_container = MarginContainer.new()
+	_overlay_margin_container.clip_contents = true
 	_overlay_margin_container.add_theme_constant_override("margin_left", PREVIEW_WINDOW_MARGIN * _editor_scale)
 	_overlay_margin_container.add_theme_constant_override("margin_top", PREVIEW_WINDOW_MARGIN * _editor_scale)
 	_overlay_margin_container.add_theme_constant_override("margin_right", PREVIEW_WINDOW_MARGIN * _editor_scale)
@@ -429,23 +446,25 @@ func _build_ui() -> void:
 	add_children(self, [
 		_preview_placeholder,
 		[_preview_window, [
-			[_sub_viewport, [
-				_proxy_camera_3d,
-				# TODO: Disable 2D camera when not in use since it causes redraws by
-				# just existing in the tree.
-				_proxy_camera_2d
-			]],
-			[_viewport_margin_container, [
-				_viewport_texture_rect
-			]],
-			_gradient_texture_rect,
-			[_overlay_margin_container, [
-				[_overlay_container, [
-					_drag_handle,
-					_resize_left_handle,
-					_resize_right_handle,
-					_lock_button,
-					_popout_button
+			[preview_panel, [
+				[_sub_viewport, [
+					_proxy_camera_3d,
+					# TODO: Disable 2D camera when not in use since it causes redraws by
+					# just existing in the tree.
+					_proxy_camera_2d
+				]],
+				[_viewport_margin_container, [
+					_viewport_texture_rect
+				]],
+				_gradient_texture_rect,
+				[_overlay_margin_container, [
+					[_overlay_container, [
+						_drag_handle,
+						_resize_left_handle,
+						_resize_right_handle,
+						_lock_button,
+						_popout_button
+					]]
 				]]
 			]]
 		]]
@@ -566,13 +585,13 @@ func get_local_pinned_position(pinned_position: PinnedPosition, preview_window_s
 			
 	return Vector2.ZERO
 	
-func get_clamped_size(desired_size: Vector2) -> Vector2:
+func get_clamped_size(desired_size: Vector2i) -> Vector2i:
 	var viewport_ratio: float = get_project_window_ratio()
-	var max_bounds: Vector2 = Vector2(size.x * 0.6, size.y * 0.8)
-	var clamped_size: Vector2 = desired_size
+	var max_bounds: Vector2i = Vector2i(size.x * 0.6, size.y * 0.8)
+	var clamped_size: Vector2i = desired_size
 	
 	# Apply aspect ratio.
-	clamped_size = Vector2(clamped_size.x, clamped_size.x * viewport_ratio)
+	clamped_size = Vector2i(clamped_size.x, clamped_size.x * viewport_ratio)
 	
 	# Clamp the max size while respecting the aspect ratio.
 	if clamped_size.y >= max_bounds.y:
@@ -598,8 +617,7 @@ func get_clamped_size(desired_size: Vector2) -> Vector2:
 		clamped_size.y = MIN_PREVIEW_WINDOW_SIZE * viewport_ratio
 		clamped_size = clamped_size * _editor_scale
 	
-	# Round down to avoid sub-pixel artifacts, mainly seen around the margins.
-	return clamped_size.floor()
+	return clamped_size
 	
 func get_project_window_size() -> Vector2i:
 	var window_width: int = int(ProjectSettings.get_setting("display/window/size/viewport_width"))
