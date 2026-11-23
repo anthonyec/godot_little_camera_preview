@@ -39,15 +39,15 @@ enum InteractionState {
 const BUTTON_SIZE: Vector2 = Vector2(30, 30)
 const MARGIN_3D: Vector2i = Vector2i(10, 10)
 const MARGIN_2D: Vector2i = Vector2i(20, 15)
-const PREVIEW_PANEL_MARGIN: int = 2
-const MIN_PREVIEW_PANEL_SIZE: int = 250
+const PREVIEW_WINDOW_MARGIN: int = 2
+const MIN_PREVIEW_WINDOW_SIZE: int = 250
 const POP_DURATION: float = 0.4
 const POPOUT_SCREEN_MARGIN: Vector2i = Vector2i(50, 50)
 const MIN_PULLOUT_DISTANCE: float = 500
 const MIN_PULLOUT_VELOCITY: float = 5000
 
 var _preview_placeholder: Panel
-var _preview_panel: Window
+var _preview_window: Window
 var _sub_viewport: SubViewport
 var _proxy_camera_3d: Camera3D
 var _proxy_camera_2d: Camera2D
@@ -74,8 +74,8 @@ var _selected_camera_2d: Camera2D
 
 var _state: InteractionState = InteractionState.NONE
 var _initial_mouse_position: Vector2i
-var _initial_preview_panel_size: Vector2i
-var _initial_preview_panel_position: Vector2i
+var _initial_preview_window_size: Vector2i
+var _initial_preview_window_position: Vector2i
 
 func _ready() -> void:
 	_build_ui()	
@@ -89,21 +89,21 @@ func _process(delta: float) -> void:
 			mouse_filter = Control.MOUSE_FILTER_IGNORE
 			
 			if not _is_popped_out:
-				_preview_panel.size = get_clamped_size(_preview_panel.size)
-				_preview_panel.position = get_container_screen_position() + get_local_pinned_position(_pinned_position)
+				_preview_window.size = get_clamped_size(_preview_window.size)
+				_preview_window.position = get_container_screen_position() + get_local_pinned_position(_pinned_position)
 			
 		InteractionState.RESIZE:
 			var delta_mouse_position: Vector2i = _initial_mouse_position - DisplayServer.mouse_get_position()
-			var resized_size: Vector2i = _preview_panel.size
+			var resized_size: Vector2i = _preview_window.size
 		
 			if _pinned_position == PinnedPosition.LEFT:
-				resized_size = _initial_preview_panel_size - delta_mouse_position
+				resized_size = _initial_preview_window_size - delta_mouse_position
 				
 			if _pinned_position == PinnedPosition.RIGHT:
-				resized_size = _initial_preview_panel_size + delta_mouse_position
+				resized_size = _initial_preview_window_size + delta_mouse_position
 			
-			_preview_panel.size = get_clamped_size(resized_size)
-			_preview_panel.position = get_container_screen_position() + get_local_pinned_position(_pinned_position)
+			_preview_window.size = get_clamped_size(resized_size)
+			_preview_window.position = get_container_screen_position() + get_local_pinned_position(_pinned_position)
 			
 			# Block mouse events from reaching the viewport so resizing isn't
 			# interrupted if the cursor leaves the handle. It also prevents underlying
@@ -114,22 +114,22 @@ func _process(delta: float) -> void:
 			_drag_handle.mouse_default_cursor_shape = Control.CURSOR_DRAG
 			
 			var mouse_position: Vector2i = DisplayServer.mouse_get_position()
-			var mouse_to_panel_difference: Vector2i = _initial_mouse_position - _initial_preview_panel_position
-			var desired_panel_position: Vector2i = mouse_position - mouse_to_panel_difference
-			_preview_panel.position = mouse_position - mouse_to_panel_difference
+			var mouse_to_window_difference: Vector2i = _initial_mouse_position - _initial_preview_window_position
+			var desired_window_position: Vector2i = mouse_position - mouse_to_window_difference
+			_preview_window.position = mouse_position - mouse_to_window_difference
 			
 			if not _is_popped_out:
-				var clamped_panel_position: Vector2i = _preview_panel.position.clamp(
+				var clamped_window_position: Vector2i = _preview_window.position.clamp(
 					get_container_screen_position(), 
-					get_container_screen_position() + get_container_size() - _preview_panel.size
+					get_container_screen_position() + get_container_size() - _preview_window.size
 				)
 				
-				var clamped_to_desired_direction: Vector2 = Vector2(desired_panel_position - clamped_panel_position).normalized()
-				var clamped_to_desired_distance: float = clamped_panel_position.distance_to(desired_panel_position)
+				var clamped_to_desired_direction: Vector2 = Vector2(desired_window_position - clamped_window_position).normalized()
+				var clamped_to_desired_distance: float = clamped_window_position.distance_to(desired_window_position)
 				var pulled_out_percent: float = clamped_to_desired_distance / MIN_PULLOUT_DISTANCE
 				var tension: float = 1 / (1 + pulled_out_percent * 20)				
 				
-				_preview_panel.position = Vector2(clamped_panel_position).lerp(Vector2(desired_panel_position), tension)
+				_preview_window.position = Vector2(clamped_window_position).lerp(Vector2(desired_window_position), tension)
 				
 				if Input.get_last_mouse_velocity().length() < 1 and clamped_to_desired_distance > MIN_PULLOUT_DISTANCE:
 					_is_popped_out = true
@@ -139,7 +139,7 @@ func _process(delta: float) -> void:
 			else:
 				_pinned_position = PinnedPosition.RIGHT
 				
-			_preview_placeholder.size = _preview_panel.size	
+			_preview_placeholder.size = _preview_window.size	
 			_preview_placeholder.position = get_local_pinned_position(_pinned_position)
 			
 		InteractionState.START_ANIMATE_INTO_PLACE:
@@ -150,10 +150,10 @@ func _process(delta: float) -> void:
 			var window_tween: Tween = create_tween()
 			window_tween.set_ease(Tween.EASE_OUT)
 			window_tween.set_trans(Tween.TRANS_CUBIC)
-			window_tween.tween_property(_preview_panel, "position", final_position, 0.3)
+			window_tween.tween_property(_preview_window, "position", final_position, 0.3)
 			
 			window_tween.finished.connect(func() -> void:
-				_preview_panel.position = final_position
+				_preview_window.position = final_position
 				_state = InteractionState.NONE
 			)
 			
@@ -163,7 +163,7 @@ func _process(delta: float) -> void:
 			# Final position is slightly shifted to appear as if the the preview has
 			# popped out, overlapping over bits of the UI. The final size is slightly
 			# bigger too to give the affect of it coming forward.
-			var final_size: Vector2i = Vector2i(Vector2(_preview_panel.size) * Vector2(1.2, 1.2))
+			var final_size: Vector2i = Vector2i(Vector2(_preview_window.size) * Vector2(1.2, 1.2))
 			var final_position: Vector2i = get_container_screen_position() + get_local_pinned_position(_pinned_position, final_size)
 			final_position += Vector2i(float(final_size.x) * 0.4, float(final_size.y) * 0.2)
 			
@@ -174,27 +174,27 @@ func _process(delta: float) -> void:
 			
 			# Define the bounce look by finding the highest point to offset the top of
 			# the bounce arc.
-			var highest_vertical_position: int = mini(_preview_panel.position.y, final_position.y)
+			var highest_vertical_position: int = mini(_preview_window.position.y, final_position.y)
 			var bounce_vertical_apex: int = highest_vertical_position - (size.y * 0.05)
 			
 			var horizontal_tween: Tween = create_tween()
 			horizontal_tween.set_ease(Tween.EASE_IN_OUT)
 			horizontal_tween.set_trans(Tween.TRANS_CUBIC)
-			horizontal_tween.tween_property(_preview_panel, "position:x", final_position.x, POP_DURATION)
+			horizontal_tween.tween_property(_preview_window, "position:x", final_position.x, POP_DURATION)
 			
 			var vertical_tween: Tween = create_tween()
 			vertical_tween.set_ease(Tween.EASE_IN_OUT)
 			vertical_tween.set_trans(Tween.TRANS_CUBIC)
-			vertical_tween.tween_property(_preview_panel, "position:y", bounce_vertical_apex, POP_DURATION / 2)
-			vertical_tween.tween_property(_preview_panel, "position:y", final_position.y, POP_DURATION / 2)
+			vertical_tween.tween_property(_preview_window, "position:y", bounce_vertical_apex, POP_DURATION / 2)
+			vertical_tween.tween_property(_preview_window, "position:y", final_position.y, POP_DURATION / 2)
 			
 			var size_tween: Tween = create_tween()
 			size_tween.set_ease(Tween.EASE_IN_OUT)
 			size_tween.set_trans(Tween.TRANS_CUBIC)
-			size_tween.tween_property(_preview_panel, "size", final_size, POP_DURATION)
+			size_tween.tween_property(_preview_window, "size", final_size, POP_DURATION)
 			
 			size_tween.finished.connect(func() -> void:
-				_preview_panel.transient = false
+				_preview_window.transient = false
 				_state = InteractionState.NONE	
 			)
 			
@@ -204,30 +204,30 @@ func _process(delta: float) -> void:
 			pass
 			
 		InteractionState.START_ANIMATE_POPIN:
-			var final_size: Vector2i = get_clamped_size(Vector2i(Vector2(_preview_panel.size) / Vector2(1.2, 1.2)))
+			var final_size: Vector2i = get_clamped_size(Vector2i(Vector2(_preview_window.size) / Vector2(1.2, 1.2)))
 			var final_position: Vector2i = get_container_screen_position() + get_local_pinned_position(_pinned_position, final_size)
 			
-			var highest_vertical_position: int = mini(_preview_panel.position.y, final_position.y)
+			var highest_vertical_position: int = mini(_preview_window.position.y, final_position.y)
 			var bounce_vertical_apex: int = highest_vertical_position - (size.y * 0.05)
 			
 			var horizontal_tween: Tween = create_tween()
 			horizontal_tween.set_ease(Tween.EASE_IN_OUT)
 			horizontal_tween.set_trans(Tween.TRANS_CUBIC)
-			horizontal_tween.tween_property(_preview_panel, "position:x", final_position.x, POP_DURATION)
+			horizontal_tween.tween_property(_preview_window, "position:x", final_position.x, POP_DURATION)
 			
 			var vertical_tween: Tween = create_tween()
 			vertical_tween.set_ease(Tween.EASE_IN_OUT)
 			vertical_tween.set_trans(Tween.TRANS_CUBIC)
-			vertical_tween.tween_property(_preview_panel, "position:y", bounce_vertical_apex, POP_DURATION / 2)
-			vertical_tween.tween_property(_preview_panel, "position:y", final_position.y, POP_DURATION / 2)
+			vertical_tween.tween_property(_preview_window, "position:y", bounce_vertical_apex, POP_DURATION / 2)
+			vertical_tween.tween_property(_preview_window, "position:y", final_position.y, POP_DURATION / 2)
 			
 			var size_tween: Tween = create_tween()
 			size_tween.set_ease(Tween.EASE_IN_OUT)
 			size_tween.set_trans(Tween.TRANS_CUBIC)
-			size_tween.tween_property(_preview_panel, "size", final_size, POP_DURATION)
+			size_tween.tween_property(_preview_window, "size", final_size, POP_DURATION)
 			
 			size_tween.finished.connect(func() -> void:
-				_preview_panel.transient = true
+				_preview_window.transient = true
 				_state = InteractionState.NONE	
 			)
 			
@@ -239,10 +239,10 @@ func _process(delta: float) -> void:
 	# I couldn't get `mouse_entered` and `mouse_exited` events to work 
 	# nicely, so I use rect method instead. Plus using this method it's easy to
 	# grow the hit area size.
-	var preview_panel_hover_rect: Rect2 = Rect2(_preview_panel.position, _preview_panel.size)
-	preview_panel_hover_rect = preview_panel_hover_rect.grow(40)
+	var preview_window_hover_rect: Rect2 = Rect2(_preview_window.position, _preview_window.size)
+	preview_window_hover_rect = preview_window_hover_rect.grow(40)
 	var mouse_position: Vector2i = DisplayServer.mouse_get_position()
-	_show_controls = _state != InteractionState.NONE or preview_panel_hover_rect.has_point(mouse_position)
+	_show_controls = _state != InteractionState.NONE or preview_window_hover_rect.has_point(mouse_position)
 	
 	# UI visibility.
 	_resize_left_handle.visible = _show_controls and _pinned_position == PinnedPosition.RIGHT and not _is_popped_out
@@ -253,7 +253,7 @@ func _process(delta: float) -> void:
 	
 	# Sync camera settings.
 	if _camera_type == CameraType.CAMERA_3D and _selected_camera_3d:
-		_sub_viewport.size = _preview_panel.size
+		_sub_viewport.size = _preview_window.size
 		
 		# Sync position and rotation without using a `RemoteTransform` node 
 		# because if you save a camera as a scene, the remote transform node will
@@ -277,15 +277,15 @@ func _process(delta: float) -> void:
 	
 	if _camera_type == CameraType.CAMERA_2D and _selected_camera_2d:
 		var project_window_size: Vector2i = get_project_window_size()
-		var ratio: float = project_window_size.x / _preview_panel.size.x
+		var ratio: float = project_window_size.x / _preview_window.size.x
 		
 		# TODO: Is there a better way to fix this?
 		# The camera border is visible sometimes due to pixel rounding. 
 		# Subtract 1px from right and bottom to hide this.
 		var hide_camera_border_fix: Vector2i = Vector2i(1, 1)
 		
-		_sub_viewport.size = _preview_panel.size
-		_sub_viewport.size_2d_override = (_preview_panel.size - hide_camera_border_fix) * ratio
+		_sub_viewport.size = _preview_window.size
+		_sub_viewport.size_2d_override = (_preview_window.size - hide_camera_border_fix) * ratio
 		_sub_viewport.size_2d_override_stretch = true
 		
 		_proxy_camera_2d.global_position = _selected_camera_2d.global_position
@@ -312,13 +312,13 @@ func _build_ui() -> void:
 	_preview_placeholder = Panel.new()
 	_preview_placeholder.modulate = Color(1.0, 1.0, 1.0, 0.7)
 	
-	_preview_panel = Window.new()
-	_preview_panel.size.x = MIN_PREVIEW_PANEL_SIZE * _editor_scale
-	_preview_panel.minimize_disabled = true
-	_preview_panel.maximize_disabled = true
-	_preview_panel.borderless = true
-	_preview_panel.transparent = true
-	_preview_panel.transient = true
+	_preview_window = Window.new()
+	_preview_window.size.x = MIN_PREVIEW_WINDOW_SIZE * _editor_scale
+	_preview_window.minimize_disabled = true
+	_preview_window.maximize_disabled = true
+	_preview_window.borderless = true
+	_preview_window.transparent = true
+	_preview_window.transient = true
 	
 	_proxy_camera_3d = Camera3D.new()
 	
@@ -328,10 +328,10 @@ func _build_ui() -> void:
 	_viewport_margin_container = MarginContainer.new()
 	_viewport_margin_container.clip_contents = true
 	_viewport_margin_container.set_anchors_preset(PRESET_FULL_RECT)
-	_viewport_margin_container.add_theme_constant_override("margin_left", PREVIEW_PANEL_MARGIN * _editor_scale)
-	_viewport_margin_container.add_theme_constant_override("margin_top", PREVIEW_PANEL_MARGIN * _editor_scale)
-	_viewport_margin_container.add_theme_constant_override("margin_right", PREVIEW_PANEL_MARGIN * _editor_scale)
-	_viewport_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_viewport_margin_container.add_theme_constant_override("margin_left", PREVIEW_WINDOW_MARGIN * _editor_scale)
+	_viewport_margin_container.add_theme_constant_override("margin_top", PREVIEW_WINDOW_MARGIN * _editor_scale)
+	_viewport_margin_container.add_theme_constant_override("margin_right", PREVIEW_WINDOW_MARGIN * _editor_scale)
+	_viewport_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_WINDOW_MARGIN * _editor_scale)
 	
 	_sub_viewport = SubViewport.new()
 	_sub_viewport.size_2d_override_stretch = true
@@ -366,10 +366,10 @@ func _build_ui() -> void:
 	_gradient_texture_rect.set_anchors_preset(PRESET_FULL_RECT)
 	
 	_overlay_margin_container = MarginContainer.new()
-	_overlay_margin_container.add_theme_constant_override("margin_left", PREVIEW_PANEL_MARGIN * _editor_scale)
-	_overlay_margin_container.add_theme_constant_override("margin_top", PREVIEW_PANEL_MARGIN * _editor_scale)
-	_overlay_margin_container.add_theme_constant_override("margin_right", PREVIEW_PANEL_MARGIN * _editor_scale)
-	_overlay_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_PANEL_MARGIN * _editor_scale)
+	_overlay_margin_container.add_theme_constant_override("margin_left", PREVIEW_WINDOW_MARGIN * _editor_scale)
+	_overlay_margin_container.add_theme_constant_override("margin_top", PREVIEW_WINDOW_MARGIN * _editor_scale)
+	_overlay_margin_container.add_theme_constant_override("margin_right", PREVIEW_WINDOW_MARGIN * _editor_scale)
+	_overlay_margin_container.add_theme_constant_override("margin_bottom", PREVIEW_WINDOW_MARGIN * _editor_scale)
 	_overlay_margin_container.set_anchors_preset(PRESET_FULL_RECT)
 	
 	_overlay_container = Control.new()
@@ -428,7 +428,7 @@ func _build_ui() -> void:
 	
 	add_children(self, [
 		_preview_placeholder,
-		[_preview_panel, [
+		[_preview_window, [
 			[_sub_viewport, [
 				_proxy_camera_3d,
 				# TODO: Disable 2D camera when not in use since it causes redraws by
@@ -524,9 +524,9 @@ func request_hide() -> void:
 	
 	# When Godot starts with a camera is selected, it has not created the 
 	# window yet.
-	if _preview_panel == null: return
+	if _preview_window == null: return
 	
-	_preview_panel.visible = false
+	_preview_window.visible = false
 	
 func request_show() -> void:
 	# Setting the viewport texture here ensure's the viewport texture reference is
@@ -544,11 +544,11 @@ func request_show() -> void:
 	# selected cameras.
 	await get_tree().process_frame
 	
-	_preview_panel.visible = true
+	_preview_window.visible = true
 	
 ## Returns the position the preview would be at for a pinned position relative 
 ## to the container control that fills the 2D or 3D viewport.
-func get_local_pinned_position(pinned_position: PinnedPosition, preview_panel_size: Vector2 = _preview_panel.size) -> Vector2i:
+func get_local_pinned_position(pinned_position: PinnedPosition, preview_window_size: Vector2 = _preview_window.size) -> Vector2i:
 	var margin: Vector2i = MARGIN_3D * _editor_scale
 	
 	if _camera_type == CameraType.CAMERA_2D:
@@ -556,10 +556,10 @@ func get_local_pinned_position(pinned_position: PinnedPosition, preview_panel_si
 	
 	match pinned_position:
 		PinnedPosition.LEFT:
-			return Vector2i(0, size.y) - Vector2i(0, preview_panel_size.y) - Vector2i(-margin.x, margin.y)
+			return Vector2i(0, size.y) - Vector2i(0, preview_window_size.y) - Vector2i(-margin.x, margin.y)
 			
 		PinnedPosition.RIGHT:
-			return get_container_size() - Vector2i(preview_panel_size) - margin
+			return get_container_size() - Vector2i(preview_window_size) - margin
 			
 		_:
 			assert(false, "Unknown pinned position %s" % str(pinned_position))
@@ -588,14 +588,14 @@ func get_clamped_size(desired_size: Vector2) -> Vector2:
 	# width instead. Applying min width to a portrait size would make it too big.
 	var is_portrait: bool = viewport_ratio > 1
 	
-	if is_portrait and clamped_size.y <= MIN_PREVIEW_PANEL_SIZE * _editor_scale:
-		clamped_size.x = MIN_PREVIEW_PANEL_SIZE / viewport_ratio
-		clamped_size.y = MIN_PREVIEW_PANEL_SIZE
+	if is_portrait and clamped_size.y <= MIN_PREVIEW_WINDOW_SIZE * _editor_scale:
+		clamped_size.x = MIN_PREVIEW_WINDOW_SIZE / viewport_ratio
+		clamped_size.y = MIN_PREVIEW_WINDOW_SIZE
 		clamped_size = clamped_size * _editor_scale
 		
-	if not is_portrait and clamped_size.x <= MIN_PREVIEW_PANEL_SIZE * _editor_scale:
-		clamped_size.x = MIN_PREVIEW_PANEL_SIZE
-		clamped_size.y = MIN_PREVIEW_PANEL_SIZE * viewport_ratio
+	if not is_portrait and clamped_size.x <= MIN_PREVIEW_WINDOW_SIZE * _editor_scale:
+		clamped_size.x = MIN_PREVIEW_WINDOW_SIZE
+		clamped_size.y = MIN_PREVIEW_WINDOW_SIZE * viewport_ratio
 		clamped_size = clamped_size * _editor_scale
 	
 	# Round down to avoid sub-pixel artifacts, mainly seen around the margins.
@@ -623,7 +623,7 @@ func _on_resize_handle_button_down() -> void:
 	
 	_state = InteractionState.RESIZE
 	_initial_mouse_position = DisplayServer.mouse_get_position()
-	_initial_preview_panel_size = _preview_panel.size
+	_initial_preview_window_size = _preview_window.size
 
 func _on_resize_handle_button_up() -> void:
 	if _state != InteractionState.RESIZE: return
@@ -635,7 +635,7 @@ func _on_drag_handle_button_down() -> void:
 		
 	_state = InteractionState.DRAG
 	_initial_mouse_position = DisplayServer.mouse_get_position()
-	_initial_preview_panel_position = _preview_panel.position
+	_initial_preview_window_position = _preview_window.position
 
 func _on_drag_handle_button_up() -> void:
 	if _state != InteractionState.DRAG: return
