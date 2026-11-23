@@ -241,8 +241,7 @@ func _process(delta: float) -> void:
 	# grow the hit area size.
 	var preview_panel_hover_rect: Rect2 = Rect2(_preview_panel.position, _preview_panel.size)
 	preview_panel_hover_rect = preview_panel_hover_rect.grow(40)
-	
-	var mouse_position: Vector2i = Vector2i(get_global_mouse_position())
+	var mouse_position: Vector2i = DisplayServer.mouse_get_position()
 	_show_controls = _state != InteractionState.NONE or preview_panel_hover_rect.has_point(mouse_position)
 	
 	# UI visibility.
