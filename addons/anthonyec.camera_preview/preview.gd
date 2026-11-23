@@ -6,6 +6,7 @@ extends Control
 const resize_icon_top_left: CompressedTexture2D = preload("./GuiResizerTopLeft.svg")
 const resize_icon_top_right: CompressedTexture2D = preload("./GuiResizerTopRight.svg")
 const pin_icon: CompressedTexture2D = preload("./Pin.svg")
+const popout_icon: CompressedTexture2D = preload("./Popout.svg")
 
 enum CameraType {
 	CAMERA_2D,
@@ -41,6 +42,7 @@ const MARGIN_2D: Vector2i = Vector2i(20, 15)
 const PREVIEW_PANEL_MARGIN: int = 2
 const MIN_PREVIEW_PANEL_SIZE: int = 250
 const POP_DURATION: float = 0.4
+const POPOUT_SCREEN_MARGIN: Vector2i = Vector2i(50, 50)
 const MIN_PULLOUT_DISTANCE: float = 500
 const MIN_PULLOUT_VELOCITY: float = 5000
 
@@ -158,10 +160,20 @@ func _process(delta: float) -> void:
 			_state = InteractionState.ANIMATE_INTO_PLACE
 			
 		InteractionState.START_ANIMATE_POPOUT:
+			# Final position is slightly shifted to appear as if the the preview has
+			# popped out, overlapping over bits of the UI. The final size is slightly
+			# bigger too to give the affect of it coming forward.
 			var final_size: Vector2i = Vector2i(Vector2(_preview_panel.size) * Vector2(1.2, 1.2))
 			var final_position: Vector2i = get_container_screen_position() + get_local_pinned_position(_pinned_position, final_size)
 			final_position += Vector2i(float(final_size.x) * 0.4, float(final_size.y) * 0.2)
 			
+			# Clamp final position to fit within the screen bounds plus and minus a margin.
+			var screen_rect: Rect2i = DisplayServer.screen_get_usable_rect(DisplayServer.SCREEN_OF_MAIN_WINDOW)
+			var max_final_position: Vector2i = (screen_rect.end - final_size).max(screen_rect.position)
+			final_position = final_position.clamp(screen_rect.position + POPOUT_SCREEN_MARGIN, max_final_position - POPOUT_SCREEN_MARGIN)
+			
+			# Define the bounce look by finding the highest point to offset the top of
+			# the bounce arc.
 			var highest_vertical_position: int = mini(_preview_panel.position.y, final_position.y)
 			var bounce_vertical_apex: int = highest_vertical_position - (size.y * 0.05)
 			
@@ -407,7 +419,7 @@ func _build_ui() -> void:
 	
 	_popout_button = Button.new()
 	_popout_button.size = BUTTON_SIZE * _editor_scale
-	_popout_button.icon = pin_icon
+	_popout_button.icon = popout_icon
 	_popout_button.flat = true
 	_popout_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_popout_button.expand_icon = true
